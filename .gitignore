@@ -1,0 +1,26 @@
+# PlatformIO
+.pio/
+.vscode/
+*.pio
+
+# Build artifacts
+build/
+*.bin
+*.elf
+*.map
+
+# IDE
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# ESP-IDF
+managed_components/
+
+# Logs
+*.log
