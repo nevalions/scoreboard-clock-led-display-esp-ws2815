@@ -1,8 +1,5 @@
 {
     "recommendations": [
-        {
-            "name": "ESP-IDF",
-            "type": "workspace"
-        }
+        "platformio.platformio-ide"
     ]
 }
