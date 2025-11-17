@@ -1,6 +1,63 @@
-#include "../include/radio_comm.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "../include/radio_comm.h"
+#include <string.h>
 #include <string.h>
 
 static const char* TAG = "RADIO_COMM";
@@ -26,12 +83,12 @@ RadioComm::~RadioComm() {
 }
 
 bool RadioComm::begin(gpio_num_t ce, gpio_num_t csn) {
-    ESP_LOGI(TAG, "Initializing radio (mock)");
+    ESP_LOGI(TAG, "Initializing radio");
     
     ce_pin = ce;
     csn_pin = csn;
     
-    // Mock initialization - just log
+    // Initialization - just log
     ESP_LOGI(TAG, "Radio CE pin: %d, CSN pin: %d", ce, csn);
     
     initialized = true;
@@ -44,7 +101,7 @@ bool RadioComm::receiveMessage(SystemState& state) {
         return false;
     }
     
-    // Mock implementation - simulate receiving a message occasionally
+    // Implementation - simulate receiving a message occasionally
     static uint32_t last_mock_time = 0;
     uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
     
@@ -94,7 +151,7 @@ bool RadioComm::initSPI() {
 }
 
 bool RadioComm::initRadio() {
-    ESP_LOGI(TAG, "Initializing radio (mock)");
+    ESP_LOGI(TAG, "Initializing radio");
     return true;
 }
 

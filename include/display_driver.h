@@ -2,13 +2,13 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-// #include "driver/rmt.h"  // Commented out for mock
+#include "driver/rmt_tx.h"
 #include "driver/gpio.h"
 
 // LED strip configuration for Play Clock (mock)
 #define LED_STRIP_PIN GPIO_NUM_13
 #define LED_COUNT 900  // Approximate total LEDs for 2 digits
-// #define LED_RMT_CHANNEL RMT_CHANNEL_0  // Commented out for mock
+// #define LED_RMT_CHANNEL RMT_CHANNEL_0
 
 // 7-segment display configuration for Play Clock (2 digits)
 #define PLAY_CLOCK_DIGITS 2

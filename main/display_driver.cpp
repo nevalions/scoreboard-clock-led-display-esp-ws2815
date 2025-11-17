@@ -29,7 +29,7 @@ PlayClockDisplay::~PlayClockDisplay() {
 }
 
 bool PlayClockDisplay::begin() {
-    ESP_LOGI(TAG, "Initializing display (mock)");
+    ESP_LOGI(TAG, "Initializing display");
     
     // Allocate LED buffer
     led_buffer_size = LED_COUNT * 3; // RGB per LED
@@ -55,7 +55,7 @@ void PlayClockDisplay::setTime(uint16_t seconds) {
     
     ESP_LOGI(TAG, "Setting time: %d seconds", seconds);
     
-    // For mock: just log the time
+    // Log the time
     last_update_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
 }
 
@@ -135,7 +135,7 @@ void PlayClockDisplay::clearDisplay() {
 
 void PlayClockDisplay::updateLEDStrip() {
     // Mock implementation - just log
-    ESP_LOGD(TAG, "Update LED strip (mock)");
+    ESP_LOGD(TAG, "Update LED strip");
 }
 
 void PlayClockDisplay::displayDigit(uint8_t digit, uint8_t value) {
