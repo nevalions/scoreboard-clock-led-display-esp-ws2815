@@ -63,7 +63,7 @@ idf.py monitor
 # Edit the test file's app_main() to run specific tests
 ```
 
-### **Using PlatformIO**
+### **Using ESP-IDF**
 
 ```bash
 # Navigate to play_clock directory

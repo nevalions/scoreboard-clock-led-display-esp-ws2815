@@ -33,7 +33,7 @@ idf.py build
 # Flash test firmware:
 idf.py flash monitor
 
-# Using PlatformIO (alternative)
+# PlatformIO (alternative - not recommended for this project)
 pio run                    # Build
 pio run --target upload    # Flash
 pio device monitor         # Monitor
