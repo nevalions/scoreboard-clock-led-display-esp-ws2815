@@ -12,8 +12,7 @@
                 "gdb",
                 "${workspaceFolder}/build/scoreboard_play_clock.elf"
             ],
-            "stopAtEntry": true,
-            "serverLaunchTimeoutSecs": 10
+            "stopAtEntry": true
         }
     ]
 }
