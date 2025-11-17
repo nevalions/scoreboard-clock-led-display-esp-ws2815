@@ -60,7 +60,7 @@ struct __attribute__((packed)) StatusFrame {
 class RadioComm {
 private:
     bool initialized;
-//    spi_device_handle_t spi;
+    spi_device_handle_t spi;
     gpio_num_t ce_pin;
     gpio_num_t csn_pin;
 
