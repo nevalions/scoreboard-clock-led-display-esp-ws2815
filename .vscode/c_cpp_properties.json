@@ -1,0 +1,42 @@
+{
+    "configurations": [
+        {
+            "name": "ESP-IDF Debug",
+            "includePath": [
+                "${config:idf.espIdfPath}/components/**",
+                "${config:idf.espIdfPath}/components/xtensa/include",
+                "${config:idf.espIdfPath}/components/esp_common/include",
+                "${config:idf.espIdfPath}/components/esp_system/include",
+                "${config:idf.espIdfPath}/components/freertos/FreeRTOS-Kernel/include",
+                "${config:idf.espIdfPath}/components/freertos/config/include/freertos",
+                "${config:idf.espIdfPath}/components/freertos/config/include/xtensa/include",
+                "${config:idf.espIdfPath}/components/freertos/FreeRTOS-Kernel/portable/xtensa/include",
+                "${config:idf.espIdfPath}/components/freertos/esp_additions/include",
+                "${config:idf.espIdfPath}/components/esp_hw_support/include",
+                "${config:idf.espIdfPath}/components/hal/include",
+                "${config:idf.espIdfPath}/components/log/include",
+                "${config:idf.espIdfPath}/components/esp_rom/include",
+                "${config:idf.espIdfPath}/components/esp_rom/esp32/include",
+                "${config:idf.espIdfPath}/components/soc/include",
+                "${config:idf.espIdfPath}/components/soc/esp32/include",
+                "${config:idf.espIdfPath}/components/driver/include",
+                "${config:idf.espIdfPath}/components/esp_driver_gpio/include",
+                "${config:idf.espIdfPath}/components/esp_driver_spi/include",
+                "${config:idf.espIdfPath}/components/esp_driver_rmt/include",
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "${config:idf.esp32ToolsPath}/tools/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc${config:idf.toolchainSuffix}",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "browse": {
+                "path": [
+                    "${config:idf.esp32ToolsPath}/tools/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc${config:idf.toolchainSuffix}"
+                ],
+                "limitSymbolsToIncludeHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}

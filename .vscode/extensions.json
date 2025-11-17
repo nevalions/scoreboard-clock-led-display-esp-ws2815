@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        {
+            "name": "ESP-IDF",
+            "type": "workspace"
+        }
+    ]
+}

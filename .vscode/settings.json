@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "ESP-IDF",
+            "compilerPath": "${config:idf.esp32ToolsPath}/tools/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc${config:idf.toolchainSuffix}",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "browse": {
+                "path": ["${config:idf.esp32ToolsPath}/tools/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc${config:idf.toolchainSuffix}"],
+                "limitSymbolsToIncludeHeaders": true
+            }
+        }
+    ]
+}
