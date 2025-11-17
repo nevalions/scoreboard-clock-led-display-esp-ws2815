@@ -1,34 +1,18 @@
 {
     "configurations": [
         {
-            "name": "ESP-IDF",
+            "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${env:IDF_PATH}/components/**",
-                "${env:IDF_PATH}/components/xtensa/include",
-                "${env:IDF_PATH}/components/esp_common/include",
-                "${env:IDF_PATH}/components/esp_system/include",
-                "${env:IDF_PATH}/components/freertos/FreeRTOS-Kernel/include",
-                "${env:IDF_PATH}/components/freertos/config/include/freertos",
-                "${env:IDF_PATH}/components/freertos/config/include/xtensa/include",
-                "${env:IDF_PATH}/components/freertos/FreeRTOS-Kernel/portable/xtensa/include",
-                "${env:IDF_PATH}/components/freertos/esp_additions/include",
-                "${env:IDF_PATH}/components/esp_hw_support/include",
-                "${env:IDF_PATH}/components/hal/include",
-                "${env:IDF_PATH}/components/log/include",
-                "${env:IDF_PATH}/components/esp_rom/include",
-                "${env:IDF_PATH}/components/esp_rom/esp32/include",
-                "${env:IDF_PATH}/components/soc/include",
-                "${env:IDF_PATH}/components/soc/esp32/include",
-                "${env:IDF_PATH}/components/driver/include",
-                "${env:IDF_PATH}/components/esp_driver_gpio/include",
-                "${env:IDF_PATH}/components/esp_driver_spi/include",
-                "${env:IDF_PATH}/components/esp_driver_rmt/include"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
+            "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-x64"
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compileCommands": [
+                "${workspaceFolder}/build/compile_commands.json"
+            ]
         }
     ],
     "version": 4
