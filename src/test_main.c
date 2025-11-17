@@ -2,7 +2,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "test/component/test_mocks.h"
+#include "../test/component/test_mocks.h"
 
 static const char* TAG = "TEST_MAIN";
 
@@ -74,7 +74,7 @@ void test_timing_functions(void) {
 void test_mock_system_state(void) {
     ESP_LOGI(TAG, "Testing mock SystemState");
     
-    SystemState test_state;
+    struct SystemState test_state;
     test_state.display_state = 1;
     test_state.seconds = 45;
     test_state.sequence = 12;
@@ -93,7 +93,7 @@ void test_mock_system_state(void) {
 void test_mock_status_frame(void) {
     ESP_LOGI(TAG, "Testing mock StatusFrame");
     
-    StatusFrame test_frame;
+    struct StatusFrame test_frame;
     test_frame.frame_type = STATUS_FRAME_TYPE;
     test_frame.state = 1;
     test_frame.seconds = 30;
@@ -146,7 +146,7 @@ void tearDown(void) {
     ESP_LOGI(TAG, "Tearing down test");
 }
 
-extern "C" void app_main(void) {
+void app_main(void) {
     ESP_LOGI(TAG, "Starting ESP-IDF Test Suite (No Hardware Required)");
     
     UNITY_BEGIN();
