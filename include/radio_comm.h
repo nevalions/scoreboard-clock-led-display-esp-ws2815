@@ -2,13 +2,12 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "driver/gpio.h"
+#include "driver/spi_master.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "driver/gpio.h"
-#include "driver/spi_master.h"
 
 // Radio module configuration (nRF24L01+)
 #define NRF24_SPI_HOST    VSPI_HOST

@@ -2,13 +2,12 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "driver/rmt.h"
+#include "driver/gpio.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "driver/rmt.h"
-#include "driver/gpio.h"
 
 // LED strip configuration
 #define LED_STRIP_PIN GPIO_NUM_13
