@@ -1,8 +1,12 @@
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <cstdint>
+#include <stdbool.h>
 #include "display_driver.h"
 #include "radio_comm.h"
+
+SystemState system_state;
 
 static const char* TAG = "PLAY_CLOCK";
 
@@ -14,14 +18,6 @@ static const char* TAG = "PLAY_CLOCK";
 #define LED_STATUS_PIN GPIO_NUM_2
 #define RADIO_CE_PIN GPIO_NUM_4
 #define RADIO_CSN_PIN GPIO_NUM_5
-
-struct SystemState {
-    uint8_t display_state;  // 0=STOP, 1=RUN, 2=RESET
-    uint16_t seconds;
-    uint8_t sequence;
-    uint32_t last_status_time;
-    bool link_alive;
-} system_state;
 
 extern "C" void app_main(void)
 {
