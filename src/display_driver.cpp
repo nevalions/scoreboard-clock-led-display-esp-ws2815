@@ -1,6 +1,7 @@
-#include "display_driver.h"
+#include "../include/display_driver.h"
 #include "esp_log.h"
 #include <string.h>
+#include <stdlib.h>
 
 static const char* TAG = "DISPLAY_DRIVER";
 
@@ -269,8 +270,8 @@ void PlayClockDisplay::showLinkWarning() {
 void PlayClockDisplay::updateLEDStrip() {
     if (!initialized) return;
 
-    // Send LED data via RMT
-    rmt_write_items(LED_RMT_CHANNEL, led_buffer, led_buffer_size / 3, false);
+    // Use ESP-IDF's built-in WS2812 RMT driver
+    rmt_write_sample(LED_RMT_CHANNEL, led_buffer, led_buffer_size / 3, false);
 }
 
 void PlayClockDisplay::update() {
