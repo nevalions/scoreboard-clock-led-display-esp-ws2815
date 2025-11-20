@@ -8,6 +8,25 @@
 
 ## Development Workflow
 
+### ESP-IDF Environment Setup
+
+Before running any ESP-IDF commands, you must activate the ESP-IDF environment:
+
+```bash
+# Activate ESP-IDF environment (configured in ~/.zshrc)
+idf
+
+# Then run build commands
+idf.py build
+idf.py flash monitor
+```
+
+### Environment Variables
+The following are automatically configured in your `.zshrc`:
+- `IDF_PATH=/home/linroot/esp-idf`
+- `PATH="$IDF_PATH/tools:$PATH"`
+- Custom `idf()` function that sources `$IDF_PATH/export.sh`
+
 ### Build Commands
 ```bash
 # Build project

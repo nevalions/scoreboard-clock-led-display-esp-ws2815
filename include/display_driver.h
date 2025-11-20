@@ -5,9 +5,7 @@
 #include <stdint.h>
 
 // LED strip configuration for Play Clock (mock)
-#define LED_STRIP_PIN GPIO_NUM_13
 #define LED_COUNT 900 // Approximate total LEDs for 2 digits
-// #define LED_RMT_CHANNEL RMT_CHANNEL_0
 
 // 7-segment display configuration for Play Clock (2 digits)
 #define PLAY_CLOCK_DIGITS 2
@@ -31,12 +29,10 @@ typedef enum {
 
 // Display modes
 typedef enum {
-  DISPLAY_MODE_NORMAL = 0,
   DISPLAY_MODE_STOP,
   DISPLAY_MODE_RUN,
   DISPLAY_MODE_RESET,
-  DISPLAY_MODE_ERROR,
-  DISPLAY_MODE_LINK_WARNING
+  DISPLAY_MODE_ERROR
 } display_mode_t;
 
 // Color structure
