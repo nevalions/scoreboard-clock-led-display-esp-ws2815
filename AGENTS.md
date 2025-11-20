@@ -4,7 +4,7 @@
 - **Implementation**: Native C (converted from C++)
 - **Framework**: ESP-IDF v6.1-dev
 - **Target**: ESP32 microcontroller
-- **Status**: Complete and ready for deployment
+- **Status**: Mock implementation ready for hardware integration
 
 ## Development Workflow
 
@@ -94,8 +94,8 @@ idf.py flash monitor
 
 ### C Programming Patterns (Current Implementation)
 - **Struct-based design** instead of classes (fully implemented)
-- **Function pointers in structs** for methods (where applicable)
 - **Pass struct pointer** as first parameter to functions
 - **Use `typedef struct`** for type definitions
 - **Initialize structs with `memset()`** where appropriate
 - **Native ESP-IDF C APIs** for all hardware interactions
+- **Mock implementations** for display and radio hardware (ready for real hardware)
