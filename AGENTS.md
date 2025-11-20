@@ -1,5 +1,11 @@
 # AGENTS.md - ESP32 Play Clock Development Guide
 
+## Project Status
+- **Implementation**: Native C (converted from C++)
+- **Framework**: ESP-IDF v6.1-dev
+- **Target**: ESP32 microcontroller
+- **Status**: Complete and ready for deployment
+
 ## Development Workflow
 
 ### Build Commands
@@ -29,7 +35,7 @@ idf.py menuconfig
 idf.py build
 
 # Run specific test (edit test file app_main() to select test)
-# Edit test/test_*.cpp files to run individual tests
+# Edit test/test_*.c files to run individual tests
 # Flash test firmware:
 idf.py flash monitor
 ```
@@ -67,9 +73,10 @@ idf.py flash monitor
 - GPIO control: `gpio_set_direction(pin, GPIO_MODE_OUTPUT)`, `gpio_set_level(pin, level)`
 - Memory: Prefer stack allocation, use `malloc()` only when necessary
 
-### C Programming Patterns
-- Struct-based design instead of classes
-- Function pointers in structs for methods
-- Pass struct pointer as first parameter to functions
-- Use `typedef struct` for type definitions
-- Initialize structs with `memset()` where appropriate
+### C Programming Patterns (Current Implementation)
+- **Struct-based design** instead of classes (fully implemented)
+- **Function pointers in structs** for methods (where applicable)
+- **Pass struct pointer** as first parameter to functions
+- **Use `typedef struct`** for type definitions
+- **Initialize structs with `memset()`** where appropriate
+- **Native ESP-IDF C APIs** for all hardware interactions
