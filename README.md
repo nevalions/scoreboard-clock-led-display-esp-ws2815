@@ -51,19 +51,18 @@ The Play Clock module is a receive-only display unit that:
 - **Visual Indicator**: Status LED blinks on link loss
 - **Auto-Recovery**: Normal operation resumes when connection restored
 
-## Build and Flash
+## Build Instructions
 
 See [AGENTS.md](AGENTS.md) for detailed development commands and workflow.
+
+**IMPORTANT**: This project should only be built, never flashed to hardware. Use `idf.py build` only.
 
 ### Quick Start
 ```bash
 # Activate ESP-IDF environment
 idf
 
-# Build and flash
-idf.py build flash monitor
-
-# Or build only
+# Build only (DO NOT FLASH to hardware)
 idf.py build
 ```
 
