@@ -115,3 +115,6 @@ bool nrf24_write_payload(RadioComm *radio, uint8_t *data, uint8_t length);
 uint8_t nrf24_get_status(RadioComm *radio);
 void nrf24_power_up(RadioComm *radio);
 void nrf24_power_down(RadioComm *radio);
+
+// Debug functions
+void radio_dump_registers(RadioComm *radio);
