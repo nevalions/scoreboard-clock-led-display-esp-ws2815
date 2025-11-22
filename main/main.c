@@ -8,7 +8,6 @@
 static const char *TAG = "PLAY_CLOCK";
 
 #define STATUS_LED_PIN GPIO_NUM_2
-#define LINK_TIMEOUT_MS 10000
 
 static PlayClockDisplay display;
 static RadioComm radio;
@@ -22,7 +21,6 @@ static void setup(void) {
   gpio_set_level(STATUS_LED_PIN, 1);
 
   memset(&system_state, 0, sizeof(system_state));
-  system_state.last_status_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
   if (!display_begin(&display)) {
     ESP_LOGE(TAG, "Failed to initialize display");
@@ -51,64 +49,27 @@ static void setup(void) {
   vTaskDelay(pdMS_TO_TICKS(100)); // Let radio settle
   radio_dump_registers(&radio);
   
-  display_set_link_status(&display, false);
   display_set_stop_mode(&display);
 
   ESP_LOGI(TAG, "Play Clock initialized successfully");
 }
 
 static void loop(void) {
-  uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
-
   // Enable debug logging temporarily
   esp_log_level_set("RADIO_COMM", ESP_LOG_DEBUG);
 
   if (radio_receive_message(&radio, &system_state)) {
-    system_state.last_status_time = current_time;
-    system_state.link_alive = true;
-    display_set_link_status(&display, true);
-
-    switch (system_state.display_state) {
-    case 0:
-      display_set_stop_mode(&display);
-      break;
-    case 1:
-      display_set_run_mode(&display);
-      break;
-    case 2:
-      display_set_reset_mode(&display);
-      break;
-    default:
-      ESP_LOGW(TAG, "Unknown display state: %d", system_state.display_state);
-      break;
-    }
-
+    // Update display with controller data
     display_set_time(&display, system_state.seconds);
-    ESP_LOGI(TAG, "State update: mode=%d, time=%d, seq=%d",
-             system_state.display_state, system_state.seconds,
-             system_state.sequence);
-  }
-
-  if (current_time - system_state.last_status_time > LINK_TIMEOUT_MS) {
-    if (system_state.link_alive) {
-      ESP_LOGW(TAG, "Link timeout detected");
-      system_state.link_alive = false;
-      display_set_link_status(&display, false);
-    }
+    ESP_LOGI(TAG, "Time update: seconds=%d, seq=%d",
+             system_state.seconds, system_state.sequence);
   }
 
   display_update(&display);
 
+  // Simple status LED blink
   static bool led_state = false;
-  if (system_state.link_alive) {
-    if (current_time % 2000 < 1000) {
-      led_state = true;
-    } else {
-      led_state = false;
-    }
-  } else {
-    led_state = (current_time % 500) < 250;
-  }
+  led_state = !led_state;
   gpio_set_level(STATUS_LED_PIN, led_state ? 1 : 0);
 
   vTaskDelay(pdMS_TO_TICKS(50));

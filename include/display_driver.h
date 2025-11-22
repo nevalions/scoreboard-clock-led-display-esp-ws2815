@@ -50,7 +50,6 @@ typedef struct {
 typedef struct {
   bool initialized;
   display_mode_t current_mode;
-  bool link_status;
   uint32_t last_update_time;
 
   // LED strip buffer
@@ -70,7 +69,6 @@ typedef struct {
 // Function declarations
 bool display_begin(PlayClockDisplay *display);
 void display_set_time(PlayClockDisplay *display, uint16_t seconds);
-void display_set_link_status(PlayClockDisplay *display, bool connected);
 void display_set_run_mode(PlayClockDisplay *display);
 void display_set_stop_mode(PlayClockDisplay *display);
 void display_set_reset_mode(PlayClockDisplay *display);

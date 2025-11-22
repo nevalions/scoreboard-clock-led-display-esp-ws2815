@@ -7,11 +7,8 @@
 
 // System state structure
 typedef struct {
-  uint8_t display_state; // 0=STOP, 1=RUN, 2=RESET
   uint16_t seconds;
   uint8_t sequence;
-  uint32_t last_status_time;
-  bool link_alive;
 } SystemState;
 
 // Radio module configuration (nRF24L01+)

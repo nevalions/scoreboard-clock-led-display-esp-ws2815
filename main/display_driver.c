@@ -45,13 +45,7 @@ void display_set_time(PlayClockDisplay *display, uint16_t seconds) {
   display->last_update_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
 }
 
-void display_set_link_status(PlayClockDisplay *display, bool connected) {
-  if (!display->initialized)
-    return;
 
-  display->link_status = connected;
-  ESP_LOGI(TAG, "Link status: %s", connected ? "connected" : "disconnected");
-}
 
 void display_set_run_mode(PlayClockDisplay *display) {
   if (!display->initialized)
@@ -89,12 +83,11 @@ void display_update(PlayClockDisplay *display) {
   if (!display->initialized)
     return;
 
-  // Mock update - just blink status LED based on link
+  // Mock update - just log current state
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
   if (current_time - display->last_update_time >
       1000) { // Update every 1 second
-    ESP_LOGD(TAG, "Display update - mode: %d, link: %s", display->current_mode,
-             display->link_status ? "up" : "down");
+    ESP_LOGD(TAG, "Display update - mode: %d", display->current_mode);
     display->last_update_time = current_time;
   }
 }
