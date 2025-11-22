@@ -9,6 +9,8 @@
 typedef struct {
   uint16_t seconds;
   uint8_t sequence;
+  uint32_t last_status_time;
+  bool link_alive;
 } SystemState;
 
 // Radio module configuration (nRF24L01+)

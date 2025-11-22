@@ -8,6 +8,7 @@
 static const char *TAG = "PLAY_CLOCK";
 
 #define STATUS_LED_PIN GPIO_NUM_2
+#define LINK_TIMEOUT_MS 10000
 
 static PlayClockDisplay display;
 static RadioComm radio;
@@ -21,6 +22,7 @@ static void setup(void) {
   gpio_set_level(STATUS_LED_PIN, 1);
 
   memset(&system_state, 0, sizeof(system_state));
+  system_state.last_status_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
   if (!display_begin(&display)) {
     ESP_LOGE(TAG, "Failed to initialize display");
@@ -55,6 +57,8 @@ static void setup(void) {
 }
 
 static void loop(void) {
+  uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+
   // Enable debug logging temporarily
   esp_log_level_set("RADIO_COMM", ESP_LOG_DEBUG);
 
@@ -65,11 +69,29 @@ static void loop(void) {
              system_state.seconds, system_state.sequence);
   }
 
+  // Check for link timeout
+  if (current_time - system_state.last_status_time > LINK_TIMEOUT_MS) {
+    if (system_state.link_alive) {
+      ESP_LOGW(TAG, "Link timeout detected");
+      system_state.link_alive = false;
+    }
+  }
+
   display_update(&display);
 
-  // Simple status LED blink
+  // Status LED based on link status
   static bool led_state = false;
-  led_state = !led_state;
+  if (system_state.link_alive) {
+    // Slow blink when link is alive
+    if (current_time % 2000 < 1000) {
+      led_state = true;
+    } else {
+      led_state = false;
+    }
+  } else {
+    // Fast blink when link is lost
+    led_state = (current_time % 500) < 250;
+  }
   gpio_set_level(STATUS_LED_PIN, led_state ? 1 : 0);
 
   vTaskDelay(pdMS_TO_TICKS(50));

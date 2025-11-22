@@ -191,6 +191,8 @@ bool radio_receive_message(RadioComm *radio, SystemState *state) {
     // Parse payload (format: seconds(2), sequence(1))
     state->seconds = (payload[0] << 8) | payload[1];
     state->sequence = payload[2];
+    state->last_status_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+    state->link_alive = true;
     
     ESP_LOGI(TAG, "Message received: seconds=%d, seq=%d",
              state->seconds, state->sequence);
