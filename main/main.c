@@ -67,6 +67,8 @@ static void loop(void) {
     display_set_time(&display, system_state.seconds);
     ESP_LOGI(TAG, "Time update: seconds=%d, seq=%d",
              system_state.seconds, system_state.sequence);
+    // Update current_time after receiving message
+    current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
   }
 
   // Check for link timeout
@@ -75,6 +77,10 @@ static void loop(void) {
       ESP_LOGW(TAG, "Link timeout detected");
       system_state.link_alive = false;
     }
+  } else if (!system_state.link_alive && (current_time - system_state.last_status_time < LINK_TIMEOUT_MS)) {
+    // Link recovered
+    ESP_LOGI(TAG, "Link restored");
+    system_state.link_alive = true;
   }
 
   display_update(&display);
