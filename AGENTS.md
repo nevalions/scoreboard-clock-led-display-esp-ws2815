@@ -4,7 +4,8 @@
 - **Implementation**: Native C (converted from C++)
 - **Framework**: ESP-IDF v6.1-dev
 - **Target**: ESP32 microcontroller
-- **Status**: Mock implementation ready for hardware integration
+- **Status**: Controller-driven display implementation
+- **Data Source**: Receives seconds from controller via nRF24L01+
 
 ## Development Workflow
 
@@ -85,6 +86,29 @@ git push
 
 **Important**: Always commit submodule changes first, then update the parent repository to reference the new commit. The parent repo only tracks which commit the submodule points to, not the submodule content directly.
 
+## Communication Protocol
+
+### Data Format
+The play clock receives 3-byte packets from the controller:
+- **Byte 0**: Seconds high byte
+- **Byte 1**: Seconds low byte  
+- **Byte 2**: Sequence number
+
+### SystemState Structure
+```c
+typedef struct {
+  uint16_t seconds;  // 0-65535, combines bytes 0-1
+  uint8_t sequence;  // 0-255, from byte 2
+} SystemState;
+```
+
+### Radio Configuration
+- **Module**: nRF24L01+ (2.4 GHz)
+- **Channel**: 76 (2.476 GHz)
+- **Data Rate**: 1 Mbps
+- **Payload Size**: 32 bytes (controller sends 3 bytes)
+- **Auto-ACK**: Enabled for reliable transmission
+
 ## Code Style Guidelines
 
 ### Formatting
@@ -124,4 +148,5 @@ git push
 - **Use `typedef struct`** for type definitions
 - **Initialize structs with `memset()`** where appropriate
 - **Native ESP-IDF C APIs** for all hardware interactions
-- **Mock implementations** for display and radio hardware (ready for real hardware)
+- **Pure display logic** - only shows controller data, no local processing
+- **Controller-driven** operation with nRF24L01+ radio communication

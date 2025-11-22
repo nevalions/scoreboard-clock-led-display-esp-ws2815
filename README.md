@@ -4,11 +4,11 @@ ESP32-based wireless play clock display for scoreboard systems. Shows seconds (S
 
 ## Overview
 
-The Play Clock module is a receive-only display unit that:
+The Play Clock module is a pure display unit that:
 - Displays seconds (00-99) on large LED digits
-- Receives timing data wirelessly from the controller
-- Shows system status through LED colors
-- Operates autonomously without user interaction
+- Receives timing data wirelessly from controller
+- Shows only controller data without local logic
+- Operates as a simple display peripheral
 
 ## Hardware
 
@@ -36,20 +36,22 @@ The Play Clock module is a receive-only display unit that:
 ## Operation
 
 ### Display Features
-- **Time Display**: Shows seconds (00-99)
-- **Status Colors**: Different colors for RUN/STOP/RESET states
-- **Link Status**: Visual indication when controller connection is lost
+- **Time Display**: Shows seconds (00-99) as received from controller
+- **Simple Operation**: No local logic or state management
 - **Error Display**: Shows error pattern on hardware failure
+- **Status LED**: Simple blink pattern to indicate system is running
 
 ### Communication Protocol
-- **Mock Implementation**: Currently using simulated radio communication
-- **Update Rate**: Every 5 seconds (mock data generation)
-- **Future**: Will implement nRF24L01+ wireless protocol
+- **Radio Module**: nRF24L01+ (2.4 GHz) wireless communication
+- **Data Format**: 3-byte payload [seconds_high, seconds_low, sequence]
+- **Update Rate**: Receives data every 250ms from controller
+- **Pure Display**: Shows received seconds without local processing
 
-### Link Monitoring
-- **Timeout Detection**: 10 seconds without status triggers warning
-- **Visual Indicator**: Status LED blinks on link loss
-- **Auto-Recovery**: Normal operation resumes when connection restored
+### Data Reception
+- **Controller-Driven**: All timing data comes from controller module
+- **No Local Logic**: No timeout detection or link management
+- **Simple Parsing**: Extracts seconds and sequence from received packets
+- **Real-time Display**: Updates immediately when new data arrives
 
 ## Build and Flash
 
@@ -95,9 +97,10 @@ All functionality is implemented using ESP-IDF built-in components for maximum r
 - Confirm power injection at both ends of each digit
 
 ### Radio Communication
-- Verify radio module connections (CE, CSN, SPI)
+- Verify nRF24L01+ connections (CE, CSN, SPI)
 - Check radio module power supply
-- Confirm frequency and channel match with controller
+- Confirm controller is transmitting data
+- Verify payload format matches controller (seconds+sequence)
 
 ### System Errors
 - Check serial monitor for error messages
@@ -114,7 +117,8 @@ All functionality is implemented using ESP-IDF built-in components for maximum r
 
 ### Timing Constraints
 - **Main Loop**: 50ms cycle time
-- **Mock Updates**: Every 1 second for display, 5 seconds for radio data
+- **Radio Reception**: Continuous listening for controller data
+- **Display Updates**: Immediate when new data received
 
 ### Power Consumption
 - **ESP32**: ~160-200mA (base operation)
