@@ -37,9 +37,10 @@ The Play Clock module is a pure display unit that:
 
 ### Display Features
 - **Time Display**: Shows seconds (00-99) as received from controller
-- **Simple Operation**: No local logic or state management
+- **Connection Monitoring**: Status LED indicates controller link status
+- **Smart Blinking**: Different blink rates for connected/disconnected states
 - **Error Display**: Shows error pattern on hardware failure
-- **Status LED**: Simple blink pattern to indicate system is running
+- **Timeout Detection**: 10-second timeout with visual warning
 
 ### Communication Protocol
 - **Radio Module**: nRF24L01+ (2.4 GHz) wireless communication
@@ -49,7 +50,8 @@ The Play Clock module is a pure display unit that:
 
 ### Data Reception
 - **Controller-Driven**: All timing data comes from controller module
-- **No Local Logic**: No timeout detection or link management
+- **Link Monitoring**: Tracks connection status with timeout detection
+- **Smart Status LED**: Visual feedback for connection state
 - **Simple Parsing**: Extracts seconds and sequence from received packets
 - **Real-time Display**: Updates immediately when new data arrives
 
@@ -101,6 +103,8 @@ All functionality is implemented using ESP-IDF built-in components for maximum r
 - Check radio module power supply
 - Confirm controller is transmitting data
 - Verify payload format matches controller (seconds+sequence)
+- Check status LED behavior for connection issues
+- Monitor serial logs for timeout/recovery messages
 
 ### System Errors
 - Check serial monitor for error messages
@@ -119,6 +123,8 @@ All functionality is implemented using ESP-IDF built-in components for maximum r
 - **Main Loop**: 50ms cycle time
 - **Radio Reception**: Continuous listening for controller data
 - **Display Updates**: Immediate when new data received
+- **Link Timeout**: 10-second timeout detection
+- **Status LED**: 2s blink (connected), 200ms blink (disconnected)
 
 ### Power Consumption
 - **ESP32**: ~160-200mA (base operation)

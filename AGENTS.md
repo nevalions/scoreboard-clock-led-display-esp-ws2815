@@ -97,8 +97,10 @@ The play clock receives 3-byte packets from the controller:
 ### SystemState Structure
 ```c
 typedef struct {
-  uint16_t seconds;  // 0-65535, combines bytes 0-1
-  uint8_t sequence;  // 0-255, from byte 2
+  uint16_t seconds;        // 0-65535, combines bytes 0-1
+  uint8_t sequence;        // 0-255, from byte 2
+  uint32_t last_status_time; // Timestamp of last received message
+  bool link_alive;         // Current connection status
 } SystemState;
 ```
 
@@ -108,6 +110,13 @@ typedef struct {
 - **Data Rate**: 1 Mbps
 - **Payload Size**: 32 bytes (controller sends 3 bytes)
 - **Auto-ACK**: Enabled for reliable transmission
+
+### Status LED Behavior
+- **Connected**: Slow blink (2 second period - 1s on, 1s off)
+- **Disconnected**: Fast blink (200ms period - 100ms on, 100ms off)
+- **Link Timeout**: 10 seconds without received data triggers disconnection
+- **Link Recovery**: Automatic when data reception resumes
+- **Visual Purpose**: Immediate feedback about controller connection status
 
 ## Code Style Guidelines
 
@@ -148,5 +157,7 @@ typedef struct {
 - **Use `typedef struct`** for type definitions
 - **Initialize structs with `memset()`** where appropriate
 - **Native ESP-IDF C APIs** for all hardware interactions
-- **Pure display logic** - only shows controller data, no local processing
+- **Pure display logic** - only shows controller data, no local timing logic
 - **Controller-driven** operation with nRF24L01+ radio communication
+- **Link monitoring** - tracks connection status with timeout detection
+- **Status LED feedback** - visual indication of connection state
