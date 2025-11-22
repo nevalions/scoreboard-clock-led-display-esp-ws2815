@@ -95,8 +95,8 @@ static void loop(void) {
       led_state = false;
     }
   } else {
-    // Fast blink when link is lost
-    led_state = (current_time % 500) < 250;
+    // Very fast blink when link is lost
+    led_state = (current_time % 200) < 100;
   }
   gpio_set_level(STATUS_LED_PIN, led_state ? 1 : 0);
 
