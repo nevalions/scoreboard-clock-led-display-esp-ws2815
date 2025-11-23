@@ -14,7 +14,7 @@ The Play Clock module is a pure display unit that:
 
 ### Components
 - **MCU**: ESP32
-- **Radio**: SX1278 (868 MHz) or nRF24L01+ (2.4 GHz)
+- **Radio**: nRF24L01+ (2.4 GHz)
 - **LED Display**: WS2815 12V LED strips forming 2 × 100cm digits
 - **Power**: 12V DC with power injection at both ends
 
@@ -48,48 +48,32 @@ The Play Clock module is a pure display unit that:
 - **Update Rate**: Receives data every 250ms from controller
 - **Pure Display**: Shows received seconds without local processing
 
-### Data Reception
-- **Controller-Driven**: All timing data comes from controller module
-- **Link Monitoring**: Tracks connection status with timeout detection
-- **Smart Status LED**: Visual feedback for connection state
-- **Simple Parsing**: Extracts seconds and sequence from received packets
-- **Real-time Display**: Updates immediately when new data arrives
+### Status LED Behavior
+- **Connected**: Slow blink (2 second period - 1s on, 1s off)
+- **Disconnected**: Fast blink (200ms period - 100ms on, 100ms off)
+- **Link Timeout**: 10 seconds without received data triggers disconnection
+- **Link Recovery**: Automatic when data reception resumes
 
-## Build and Flash
+## Development
 
-See [AGENTS.md](AGENTS.md) for detailed development commands and workflow.
+For detailed development setup, build commands, code style guidelines, and workflow, see [AGENTS.md](AGENTS.md).
 
 ### Quick Start
 ```bash
 # Activate ESP-IDF environment
 idf
 
-# Build and flash
-idf.py build flash monitor
-
-# Or build only
+# Build project
 idf.py build
 ```
 
-### Development Environment
+**Important**: This project should only be built, never flashed to hardware.
+
+### Technology Stack
 - **Language**: Native C (not C++)
-- **ESP-IDF Version**: v6.1-dev
-- **Target Platform**: ESP32
+- **Framework**: ESP-IDF v6.1-dev
+- **Target**: ESP32 microcontroller
 - **Build System**: CMake with ESP-IDF
-
-## Dependencies
-
-### ESP-IDF Components
-- `driver/gpio` - GPIO control
-- `freertos` - Task management
-- `esp_log` - Logging system
-
-### Implementation Language
-- **Native C**: Project implemented in pure C (not C++)
-- **Struct-based Design**: Uses C structs instead of classes
-- **ESP-IDF Framework**: Built on ESP-IDF v6.1-dev
-
-All functionality is implemented using ESP-IDF built-in components for maximum reliability and performance.
 
 ## Troubleshooting
 
@@ -102,7 +86,6 @@ All functionality is implemented using ESP-IDF built-in components for maximum r
 - Verify nRF24L01+ connections (CE, CSN, SPI)
 - Check radio module power supply
 - Confirm controller is transmitting data
-- Verify payload format matches controller (seconds+sequence)
 - Check status LED behavior for connection issues
 - Monitor serial logs for timeout/recovery messages
 
@@ -113,20 +96,13 @@ All functionality is implemented using ESP-IDF built-in components for maximum r
 
 ## Technical Specifications
 
-### Memory Usage
-- **LED Buffer**: ~2.7KB (900 LEDs × 3 bytes, mock allocation)
-- **Stack Size**: Configured for FreeRTOS tasks
-- **Heap Usage**: Minimal, mainly for struct allocation
-- **Code Size**: Optimized C implementation
+### Power Consumption
+- **ESP32**: ~160-200mA (base operation)
+- **LED Strip**: 3-6A at 12V (when implemented)
+- **Radio**: ~15mA (receive mode)
 
 ### Timing Constraints
-- **Main Loop**: 50ms cycle time
 - **Radio Reception**: Continuous listening for controller data
 - **Display Updates**: Immediate when new data received
 - **Link Timeout**: 10-second timeout detection
 - **Status LED**: 2s blink (connected), 200ms blink (disconnected)
-
-### Power Consumption
-- **ESP32**: ~160-200mA (base operation)
-- **Future LED Strip**: 3-6A at 12V (when implemented)
-- **Future Radio**: ~15mA (receive mode)

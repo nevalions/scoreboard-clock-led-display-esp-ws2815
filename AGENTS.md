@@ -1,6 +1,6 @@
 # AGENTS.md - ESP32 Play Clock Development Guide
 
-## Project Status
+## Project Overview
 - **Implementation**: Native C (converted from C++)
 - **Framework**: ESP-IDF v6.1-dev
 - **Target**: ESP32 microcontroller
@@ -86,6 +86,8 @@ git push
 
 **Important**: Always commit submodule changes first, then update the parent repository to reference the new commit. The parent repo only tracks which commit the submodule points to, not the submodule content directly.
 
+For project overview, hardware specifications, and user documentation, see [README.md](README.md).
+
 ## Communication Protocol
 
 ### Data Format
@@ -111,12 +113,7 @@ typedef struct {
 - **Payload Size**: 32 bytes (controller sends 3 bytes)
 - **Auto-ACK**: Enabled for reliable transmission
 
-### Status LED Behavior
-- **Connected**: Slow blink (2 second period - 1s on, 1s off)
-- **Disconnected**: Fast blink (200ms period - 100ms on, 100ms off)
-- **Link Timeout**: 10 seconds without received data triggers disconnection
-- **Link Recovery**: Automatic when data reception resumes
-- **Visual Purpose**: Immediate feedback about controller connection status
+
 
 ## Code Style Guidelines
 
