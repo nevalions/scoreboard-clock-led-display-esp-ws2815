@@ -2,9 +2,6 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-# Add radio-common submodule
-add_subdirectory(radio-common)
-
 # Include ESP-IDF build system
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 

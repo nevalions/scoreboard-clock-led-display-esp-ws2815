@@ -34,7 +34,7 @@ static void setup(void) {
     }
   }
 
-  if (!radio_begin(&radio, NRF24_CE_PIN, NRF24_CSN_PIN)) {
+  if (!radio_begin(&radio, RADIO_CE_PIN, RADIO_CSN_PIN)) {
     ESP_LOGE(TAG, "Failed to initialize radio");
     display_show_error(&display);
     while (1) {
