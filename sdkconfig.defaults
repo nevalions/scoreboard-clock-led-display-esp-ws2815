@@ -19,6 +19,9 @@ CONFIG_PARTITION_TABLE_FILENAME="partitions_singleapp.csv"
 CONFIG_BT_ENABLED=n
 CONFIG_BT_BLUEDROID_ENABLED=n
 
+# Disable WiFi (not used in play clock)
+CONFIG_ESP_WIFI_ENABLED=n
+
 # Optimizations for scoreboard module
 CONFIG_FREERTOS_HZ=1000
 CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
