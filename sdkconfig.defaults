@@ -1,8 +1,7 @@
 # ESP32 Play Clock - Default Configuration
-# Override flash size to 2MB for actual hardware
-
-CONFIG_ESPTOOLPY_FLASHSIZE_2MB=y
-CONFIG_ESPTOOLPY_FLASHSIZE="2MB"
+# Override flash size to 4MB for actual hardware
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
 
 # UART Configuration for CH340C USB-to-Serial
 CONFIG_ESPTOOLPY_FLASHMODE_DIO=y
@@ -25,3 +24,6 @@ CONFIG_ESP_WIFI_ENABLED=n
 # Optimizations for scoreboard module
 CONFIG_FREERTOS_HZ=1000
 CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# Flash chip support
+CONFIG_SPI_FLASH_SUPPORT_BOYA_CHIP=y
