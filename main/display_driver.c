@@ -110,8 +110,8 @@ bool display_begin(PlayClockDisplay *display) {
 
   // Initialize colors
   display->color_off = (color_t){0, 0, 0};
-  display->color_on = (color_t){255, 255, 255};
-  display->color_warning = (color_t){255, 165, 0}; // Orange
+  display->color_on = (color_t){255, 165, 0}; // Orange for seconds display
+  display->color_warning = (color_t){255, 255, 0}; // Yellow
   display->color_error = (color_t){255, 0, 0};
   
   // Set default brightness
