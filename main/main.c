@@ -8,18 +8,66 @@
 static const char *TAG = "PLAY_CLOCK";
 
 #define STATUS_LED_PIN GPIO_NUM_2
+#define TEST_BUTTON_PIN GPIO_NUM_0  // Boot button on ESP32
 #define LINK_TIMEOUT_MS 10000
+#define BUTTON_DEBOUNCE_MS 50
 
 static PlayClockDisplay display;
 static RadioComm radio;
 static SystemState system_state;
 
+// Button state tracking
+static uint32_t last_button_press_time = 0;
+static bool button_pressed = false;
+
+// Button debouncing and press detection
+static bool is_button_pressed(void) {
+  uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+  bool current_state = gpio_get_level(TEST_BUTTON_PIN) == 0; // Boot button is active low
+  
+  if (current_state && !button_pressed && 
+      (current_time - last_button_press_time > BUTTON_DEBOUNCE_MS)) {
+    button_pressed = true;
+    last_button_press_time = current_time;
+    return true;
+  } else if (!current_state) {
+    button_pressed = false;
+  }
+  
+  return false;
+}
+
+// Number cycling test - displays 00-99 on both digits
+static void run_number_cycling_test(void) {
+  ESP_LOGI(TAG, "Starting number cycling test (00-99)");
+  
+  for (int i = 0; i <= 99; i++) {
+    display_set_time(&display, i);
+    display_update(&display);
+    
+    ESP_LOGD(TAG, "Displaying: %02d", i);
+    vTaskDelay(pdMS_TO_TICKS(200)); // Display each number for 200ms
+  }
+  
+  // Clear display after test
+  display_clear(&display);
+  display_update(&display);
+  ESP_LOGI(TAG, "Number cycling test completed");
+}
+
 static void setup(void) {
   ESP_LOGI(TAG, "Starting Play Clock Application");
 
+  // Configure status LED
   gpio_reset_pin(STATUS_LED_PIN);
   gpio_set_direction(STATUS_LED_PIN, GPIO_MODE_OUTPUT);
   gpio_set_level(STATUS_LED_PIN, 1);
+  
+  // Configure test button (boot button)
+  ESP_LOGI(TAG, "Configuring test button on GPIO %d", TEST_BUTTON_PIN);
+  gpio_reset_pin(TEST_BUTTON_PIN);
+  gpio_set_direction(TEST_BUTTON_PIN, GPIO_MODE_INPUT);
+  gpio_set_pull_mode(TEST_BUTTON_PIN, GPIO_PULLUP_ONLY);
 
   memset(&system_state, 0, sizeof(system_state));
   system_state.last_status_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
@@ -62,6 +110,12 @@ static void setup(void) {
 
 static void loop(void) {
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+
+  // Check for button press
+  if (is_button_pressed()) {
+    ESP_LOGI(TAG, "Test button pressed - running number cycling test");
+    run_number_cycling_test();
+  }
 
   // Enable debug logging temporarily
   esp_log_level_set("RADIO_COMM", ESP_LOG_DEBUG);
