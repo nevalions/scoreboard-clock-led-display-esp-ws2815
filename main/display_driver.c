@@ -139,6 +139,15 @@ void display_set_time(PlayClockDisplay *display, uint16_t seconds) {
   if (!display->initialized)
     return;
 
+  // Check for null signal (255 seconds = 0xFF)
+  if (seconds == 255) {
+    ESP_LOGI(TAG, "Received null signal (255 seconds) - clearing display");
+    display_clear(display);
+    display_update(display);
+    display->last_update_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+    return;
+  }
+
   ESP_LOGI(TAG, "Setting time: %d seconds", seconds);
 
   // Extract digits (00-99 seconds)
