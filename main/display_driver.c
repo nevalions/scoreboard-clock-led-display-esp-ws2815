@@ -8,6 +8,25 @@
 
 static const char *TAG = "DISPLAY_DRIVER";
 
+// WS2815 timing constants (microseconds)
+#define WS2815_BIT_ONE_HIGH_US 1
+#define WS2815_BIT_ONE_LOW_US 1
+#define WS2815_BIT_ZERO_HIGH_US 0
+#define WS2815_BIT_ZERO_LOW_US 1
+#define WS2815_RESET_PULSE_US 50
+
+// Test pattern timing constants (milliseconds)
+#define TEST_COLOR_DELAY_MS 1000
+#define TEST_SEGMENT_DELAY_MS 300
+#define TEST_SEGMENT_OFF_DELAY_MS 100
+#define TEST_LED_DELAY_MS 500
+#define TEST_LED_OFF_DELAY_MS 200
+#define NUMBER_CYCLE_DELAY_MS 200
+
+// Brightness levels for test patterns
+#define TEST_COLOR_BRIGHTNESS 100
+#define TEST_WHITE_BRIGHTNESS 50
+
 // 7-segment digit patterns (0-9)
 // Each bit represents a segment: A,B,C,D,E,F,G
 static const uint8_t digit_patterns[10] = {
@@ -26,34 +45,44 @@ static const uint8_t digit_patterns[10] = {
 // LED strip buffer
 static uint32_t led_buffer[LED_COUNT];
 
+// LED offset constants for segment positioning
+#define SEGMENT_A_OFFSET 0
+#define SEGMENT_B_OFFSET 15
+#define SEGMENT_C_OFFSET 45
+#define SEGMENT_D_OFFSET 75
+#define SEGMENT_E_OFFSET 90
+#define SEGMENT_F_OFFSET 120
+#define SEGMENT_G_OFFSET 150
+#define LEDS_PER_DIGIT 450
+
 // Initialize segment-to-LED mapping for 2-digit display
 static void init_segment_mapping(PlayClockDisplay *display) {
   // Digit 0 (left digit) - LEDs 0-449
   // Digit 1 (right digit) - LEDs 450-899
   
   for (int digit = 0; digit < PLAY_CLOCK_DIGITS; digit++) {
-    uint16_t base_offset = digit * 450; // 450 LEDs per digit
+    uint16_t base_offset = digit * LEDS_PER_DIGIT;
     
     // Segment A (top horizontal) - 15 LEDs
-    display->segments[digit][SEGMENT_A] = (segment_range_t){base_offset, LEDS_PER_SEGMENT_HORIZONTAL};
+    display->segments[digit][SEGMENT_A] = (segment_range_t){base_offset + SEGMENT_A_OFFSET, LEDS_PER_SEGMENT_HORIZONTAL};
     
     // Segment B (upper right vertical) - 30 LEDs  
-    display->segments[digit][SEGMENT_B] = (segment_range_t){base_offset + 15, LEDS_PER_SEGMENT_VERTICAL};
+    display->segments[digit][SEGMENT_B] = (segment_range_t){base_offset + SEGMENT_B_OFFSET, LEDS_PER_SEGMENT_VERTICAL};
     
     // Segment C (lower right vertical) - 30 LEDs
-    display->segments[digit][SEGMENT_C] = (segment_range_t){base_offset + 45, LEDS_PER_SEGMENT_VERTICAL};
+    display->segments[digit][SEGMENT_C] = (segment_range_t){base_offset + SEGMENT_C_OFFSET, LEDS_PER_SEGMENT_VERTICAL};
     
     // Segment D (bottom horizontal) - 15 LEDs
-    display->segments[digit][SEGMENT_D] = (segment_range_t){base_offset + 75, LEDS_PER_SEGMENT_HORIZONTAL};
+    display->segments[digit][SEGMENT_D] = (segment_range_t){base_offset + SEGMENT_D_OFFSET, LEDS_PER_SEGMENT_HORIZONTAL};
     
     // Segment E (lower left vertical) - 30 LEDs
-    display->segments[digit][SEGMENT_E] = (segment_range_t){base_offset + 90, LEDS_PER_SEGMENT_VERTICAL};
+    display->segments[digit][SEGMENT_E] = (segment_range_t){base_offset + SEGMENT_E_OFFSET, LEDS_PER_SEGMENT_VERTICAL};
     
     // Segment F (upper left vertical) - 30 LEDs
-    display->segments[digit][SEGMENT_F] = (segment_range_t){base_offset + 120, LEDS_PER_SEGMENT_VERTICAL};
+    display->segments[digit][SEGMENT_F] = (segment_range_t){base_offset + SEGMENT_F_OFFSET, LEDS_PER_SEGMENT_VERTICAL};
     
     // Segment G (middle horizontal) - 15 LEDs
-    display->segments[digit][SEGMENT_G] = (segment_range_t){base_offset + 150, LEDS_PER_SEGMENT_HORIZONTAL};
+    display->segments[digit][SEGMENT_G] = (segment_range_t){base_offset + SEGMENT_G_OFFSET, LEDS_PER_SEGMENT_HORIZONTAL};
   }
 }
 
@@ -69,6 +98,30 @@ static uint32_t rgb_to_ws2815(color_t color, uint8_t brightness) {
 static void set_led_color(uint16_t led_index, color_t color, uint8_t brightness) {
   if (led_index < LED_COUNT) {
     led_buffer[led_index] = rgb_to_ws2815(color, brightness);
+  }
+}
+
+// Helper function to fill all LEDs with a specific color
+static void fill_all_leds(color_t color, uint8_t brightness) {
+  for (int i = 0; i < LED_COUNT; i++) {
+    led_buffer[i] = rgb_to_ws2815(color, brightness);
+  }
+}
+
+// Helper function to send WS2815 bit with proper timing
+static void send_ws2815_bit(bool bit_value) {
+  if (bit_value) {
+    // '1' bit: ~0.7us high, ~0.6us low
+    gpio_set_level(LED_STRIP_PIN, 1);
+    esp_rom_delay_us(WS2815_BIT_ONE_HIGH_US);
+    gpio_set_level(LED_STRIP_PIN, 0);
+    esp_rom_delay_us(WS2815_BIT_ONE_LOW_US);
+  } else {
+    // '0' bit: ~0.35us high, ~0.8us low
+    gpio_set_level(LED_STRIP_PIN, 1);
+    esp_rom_delay_us(WS2815_BIT_ZERO_HIGH_US);
+    gpio_set_level(LED_STRIP_PIN, 0);
+    esp_rom_delay_us(WS2815_BIT_ZERO_LOW_US);
   }
 }
 
@@ -224,10 +277,8 @@ void display_clear(PlayClockDisplay *display) {
   if (!display->initialized)
     return;
 
-  // Clear all LEDs
-  for (int i = 0; i < LED_COUNT; i++) {
-    led_buffer[i] = rgb_to_ws2815(display->color_off, display->brightness);
-  }
+  // Clear all LEDs using helper function
+  fill_all_leds(display->color_off, display->brightness);
 }
 
 void display_set_brightness(PlayClockDisplay *display, uint8_t brightness) {
@@ -246,38 +297,52 @@ void display_set_segment(PlayClockDisplay *display, uint8_t digit, segment_t seg
   set_segment_leds(display, digit, segment, color);
 }
 
+// Helper function to test single LED color
+static void test_single_led_color(PlayClockDisplay *display, color_t color, const char* color_name) {
+  ESP_LOGI(TAG, "Testing LED color: %s", color_name);
+  set_led_color(0, color, 255);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(TEST_LED_DELAY_MS));
+}
+
 // Connection test - checks if LED strip responds to basic commands
 bool display_connection_test(PlayClockDisplay *display) {
   if (!display) return false;
   
   ESP_LOGI(TAG, "Testing LED strip connection...");
   
-  // Test 1: Set first LED to red
-  ESP_LOGI(TAG, "Test 1: Setting first LED to red");
-  set_led_color(0, (color_t){255, 0, 0}, 255);
-  display_update(display);
-  vTaskDelay(pdMS_TO_TICKS(500));
+  // Test primary colors using helper function
+  test_single_led_color(display, (color_t){255, 0, 0}, "red");
+  test_single_led_color(display, (color_t){0, 255, 0}, "green");
+  test_single_led_color(display, (color_t){0, 0, 255}, "blue");
   
-  // Test 2: Set first LED to green
-  ESP_LOGI(TAG, "Test 2: Setting first LED to green");
-  set_led_color(0, (color_t){0, 255, 0}, 255);
-  display_update(display);
-  vTaskDelay(pdMS_TO_TICKS(500));
-  
-  // Test 3: Set first LED to blue
-  ESP_LOGI(TAG, "Test 3: Setting first LED to blue");
-  set_led_color(0, (color_t){0, 0, 255}, 255);
-  display_update(display);
-  vTaskDelay(pdMS_TO_TICKS(500));
-  
-  // Test 4: Clear first LED
-  ESP_LOGI(TAG, "Test 4: Clearing first LED");
+  // Clear first LED
+  ESP_LOGI(TAG, "Clearing first LED");
   set_led_color(0, (color_t){0, 0, 0}, 255);
   display_update(display);
-  vTaskDelay(pdMS_TO_TICKS(200));
+  vTaskDelay(pdMS_TO_TICKS(TEST_LED_OFF_DELAY_MS));
   
   ESP_LOGI(TAG, "LED strip connection test completed");
   return true; // Always return true for now - visual verification needed
+}
+
+// Helper function to test all LEDs with a specific color
+static void test_all_leds_color(PlayClockDisplay *display, color_t color, uint8_t brightness, const char* color_name) {
+  ESP_LOGI(TAG, "Test pattern: All LEDs %s", color_name);
+  fill_all_leds(color, brightness);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(TEST_COLOR_DELAY_MS));
+}
+
+// Helper function to test individual segment
+static void test_single_segment(PlayClockDisplay *display, uint8_t digit, segment_t segment) {
+  ESP_LOGI(TAG, "Testing segment %d on digit %d", segment, digit);
+  set_segment_leds(display, digit, segment, (color_t){255, 255, 0}); // Yellow
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(TEST_SEGMENT_DELAY_MS));
+  set_segment_leds(display, digit, segment, display->color_off);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(TEST_SEGMENT_OFF_DELAY_MS));
 }
 
 // Visual test pattern - displays all colors and segments
@@ -294,51 +359,19 @@ void display_test_pattern(PlayClockDisplay *display) {
   display_update(display);
   vTaskDelay(pdMS_TO_TICKS(500));
   
-  // Test 1: All LEDs red
-  ESP_LOGI(TAG, "Test pattern: All LEDs red");
-  for (int i = 0; i < LED_COUNT; i++) {
-    led_buffer[i] = rgb_to_ws2815((color_t){255, 0, 0}, 100);
-  }
-  display_update(display);
-  vTaskDelay(pdMS_TO_TICKS(1000));
+  // Test primary colors using helper function
+  test_all_leds_color(display, (color_t){255, 0, 0}, TEST_COLOR_BRIGHTNESS, "red");
+  test_all_leds_color(display, (color_t){0, 255, 0}, TEST_COLOR_BRIGHTNESS, "green");
+  test_all_leds_color(display, (color_t){0, 0, 255}, TEST_COLOR_BRIGHTNESS, "blue");
+  test_all_leds_color(display, (color_t){255, 255, 255}, TEST_WHITE_BRIGHTNESS, "white");
   
-  // Test 2: All LEDs green
-  ESP_LOGI(TAG, "Test pattern: All LEDs green");
-  for (int i = 0; i < LED_COUNT; i++) {
-    led_buffer[i] = rgb_to_ws2815((color_t){0, 255, 0}, 100);
-  }
-  display_update(display);
-  vTaskDelay(pdMS_TO_TICKS(1000));
-  
-  // Test 3: All LEDs blue
-  ESP_LOGI(TAG, "Test pattern: All LEDs blue");
-  for (int i = 0; i < LED_COUNT; i++) {
-    led_buffer[i] = rgb_to_ws2815((color_t){0, 0, 255}, 100);
-  }
-  display_update(display);
-  vTaskDelay(pdMS_TO_TICKS(1000));
-  
-  // Test 4: White (all colors)
-  ESP_LOGI(TAG, "Test pattern: All LEDs white");
-  for (int i = 0; i < LED_COUNT; i++) {
-    led_buffer[i] = rgb_to_ws2815((color_t){255, 255, 255}, 50);
-  }
-  display_update(display);
-  vTaskDelay(pdMS_TO_TICKS(1000));
-  
-  // Test 5: Digit segments test
+  // Test digit segments
   ESP_LOGI(TAG, "Test pattern: Digit segments");
   display_clear(display);
   
-  // Test each segment on first digit
+  // Test each segment on first digit using helper function
   for (int seg = 0; seg < SEGMENTS_PER_DIGIT; seg++) {
-    ESP_LOGI(TAG, "Testing segment %d on digit 0", seg);
-    set_segment_leds(display, 0, seg, (color_t){255, 255, 0}); // Yellow
-    display_update(display);
-    vTaskDelay(pdMS_TO_TICKS(300));
-    set_segment_leds(display, 0, seg, display->color_off);
-    display_update(display);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    test_single_segment(display, 0, seg);
   }
   
   // Test 6: Display "88" (all segments on)
@@ -363,30 +396,16 @@ void display_update(PlayClockDisplay *display) {
   for (int i = 0; i < LED_COUNT; i++) {
     uint32_t color = led_buffer[i];
     
-    // Send 24 bits (GRB format)
+    // Send 24 bits (GRB format) using helper function
     for (int bit = 23; bit >= 0; bit--) {
       bool bit_value = (color >> bit) & 1;
-      
-      // WS2815 timing (simplified - not accurate for production)
-      if (bit_value) {
-        // '1' bit: ~0.7us high, ~0.6us low
-        gpio_set_level(LED_STRIP_PIN, 1);
-        esp_rom_delay_us(1);
-        gpio_set_level(LED_STRIP_PIN, 0);
-        esp_rom_delay_us(1);
-      } else {
-        // '0' bit: ~0.35us high, ~0.8us low
-        gpio_set_level(LED_STRIP_PIN, 1);
-        esp_rom_delay_us(0);
-        gpio_set_level(LED_STRIP_PIN, 0);
-        esp_rom_delay_us(1);
-      }
+      send_ws2815_bit(bit_value);
     }
   }
   
   // Reset pulse
   gpio_set_level(LED_STRIP_PIN, 0);
-  esp_rom_delay_us(50);
+  esp_rom_delay_us(WS2815_RESET_PULSE_US);
 
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
   if (current_time - display->last_update_time > 1000) {
