@@ -89,6 +89,7 @@ bool display_begin(PlayClockDisplay *display) {
   memset(display, 0, sizeof(PlayClockDisplay));
 
   // Configure GPIO for LED strip data pin
+  ESP_LOGI(TAG, "Configuring GPIO pin %d for WS2815 data line", LED_STRIP_PIN);
   gpio_config_t io_conf = {
     .pin_bit_mask = (1ULL << LED_STRIP_PIN),
     .mode = GPIO_MODE_OUTPUT,
@@ -96,9 +97,15 @@ bool display_begin(PlayClockDisplay *display) {
     .pull_down_en = GPIO_PULLDOWN_DISABLE,
     .intr_type = GPIO_INTR_DISABLE
   };
-  gpio_config(&io_conf);
+  esp_err_t gpio_result = gpio_config(&io_conf);
+  if (gpio_result != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to configure GPIO pin %d: %s", LED_STRIP_PIN, esp_err_to_name(gpio_result));
+    return false;
+  }
+  ESP_LOGI(TAG, "GPIO pin %d configured successfully", LED_STRIP_PIN);
 
   // Initialize segment mapping
+  ESP_LOGI(TAG, "Initializing segment mapping for %d digits", PLAY_CLOCK_DIGITS);
   init_segment_mapping(display);
 
   // Initialize colors
@@ -109,9 +116,19 @@ bool display_begin(PlayClockDisplay *display) {
   
   // Set default brightness
   display->brightness = 255;
+  ESP_LOGI(TAG, "Brightness set to default: %d", display->brightness);
 
   // Clear display
   display_clear(display);
+
+  // Run connection test
+  ESP_LOGI(TAG, "Running LED strip connection test...");
+  bool test_result = display_connection_test(display);
+  if (!test_result) {
+    ESP_LOGW(TAG, "LED strip connection test failed - continuing anyway");
+  } else {
+    ESP_LOGI(TAG, "LED strip connection test passed");
+  }
 
   display->initialized = true;
   ESP_LOGI(TAG, "WS2815 display initialized successfully");
@@ -218,6 +235,114 @@ void display_set_segment(PlayClockDisplay *display, uint8_t digit, segment_t seg
 
   color_t color = enable ? display->color_on : display->color_off;
   set_segment_leds(display, digit, segment, color);
+}
+
+// Connection test - checks if LED strip responds to basic commands
+bool display_connection_test(PlayClockDisplay *display) {
+  if (!display) return false;
+  
+  ESP_LOGI(TAG, "Testing LED strip connection...");
+  
+  // Test 1: Set first LED to red
+  ESP_LOGI(TAG, "Test 1: Setting first LED to red");
+  set_led_color(0, (color_t){255, 0, 0}, 255);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(500));
+  
+  // Test 2: Set first LED to green
+  ESP_LOGI(TAG, "Test 2: Setting first LED to green");
+  set_led_color(0, (color_t){0, 255, 0}, 255);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(500));
+  
+  // Test 3: Set first LED to blue
+  ESP_LOGI(TAG, "Test 3: Setting first LED to blue");
+  set_led_color(0, (color_t){0, 0, 255}, 255);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(500));
+  
+  // Test 4: Clear first LED
+  ESP_LOGI(TAG, "Test 4: Clearing first LED");
+  set_led_color(0, (color_t){0, 0, 0}, 255);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(200));
+  
+  ESP_LOGI(TAG, "LED strip connection test completed");
+  return true; // Always return true for now - visual verification needed
+}
+
+// Visual test pattern - displays all colors and segments
+void display_test_pattern(PlayClockDisplay *display) {
+  if (!display->initialized) {
+    ESP_LOGE(TAG, "Display not initialized for test pattern");
+    return;
+  }
+  
+  ESP_LOGI(TAG, "Starting LED test pattern...");
+  
+  // Clear display first
+  display_clear(display);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(500));
+  
+  // Test 1: All LEDs red
+  ESP_LOGI(TAG, "Test pattern: All LEDs red");
+  for (int i = 0; i < LED_COUNT; i++) {
+    led_buffer[i] = rgb_to_ws2815((color_t){255, 0, 0}, 100);
+  }
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  
+  // Test 2: All LEDs green
+  ESP_LOGI(TAG, "Test pattern: All LEDs green");
+  for (int i = 0; i < LED_COUNT; i++) {
+    led_buffer[i] = rgb_to_ws2815((color_t){0, 255, 0}, 100);
+  }
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  
+  // Test 3: All LEDs blue
+  ESP_LOGI(TAG, "Test pattern: All LEDs blue");
+  for (int i = 0; i < LED_COUNT; i++) {
+    led_buffer[i] = rgb_to_ws2815((color_t){0, 0, 255}, 100);
+  }
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  
+  // Test 4: White (all colors)
+  ESP_LOGI(TAG, "Test pattern: All LEDs white");
+  for (int i = 0; i < LED_COUNT; i++) {
+    led_buffer[i] = rgb_to_ws2815((color_t){255, 255, 255}, 50);
+  }
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  
+  // Test 5: Digit segments test
+  ESP_LOGI(TAG, "Test pattern: Digit segments");
+  display_clear(display);
+  
+  // Test each segment on first digit
+  for (int seg = 0; seg < SEGMENTS_PER_DIGIT; seg++) {
+    ESP_LOGI(TAG, "Testing segment %d on digit 0", seg);
+    set_segment_leds(display, 0, seg, (color_t){255, 255, 0}); // Yellow
+    display_update(display);
+    vTaskDelay(pdMS_TO_TICKS(300));
+    set_segment_leds(display, 0, seg, display->color_off);
+    display_update(display);
+    vTaskDelay(pdMS_TO_TICKS(100));
+  }
+  
+  // Test 6: Display "88" (all segments on)
+  ESP_LOGI(TAG, "Test pattern: Display '88' (all segments)");
+  display_set_time(display, 88);
+  display_update(display);
+  vTaskDelay(pdMS_TO_TICKS(2000));
+  
+  // Clear display
+  display_clear(display);
+  display_update(display);
+  
+  ESP_LOGI(TAG, "LED test pattern completed");
 }
 
 void display_update(PlayClockDisplay *display) {

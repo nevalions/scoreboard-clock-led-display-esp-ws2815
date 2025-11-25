@@ -52,6 +52,10 @@ static void setup(void) {
   radio_dump_registers(&radio);
   
   display_set_stop_mode(&display);
+  
+  // Run LED test pattern for hardware verification
+  ESP_LOGI(TAG, "Running LED test pattern for hardware verification...");
+  display_test_pattern(&display);
 
   ESP_LOGI(TAG, "Play Clock initialized successfully");
 }
