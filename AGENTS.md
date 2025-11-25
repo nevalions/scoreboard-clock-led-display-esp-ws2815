@@ -6,6 +6,9 @@
 - **Target**: ESP32 microcontroller
 - **Status**: Controller-driven display implementation
 - **Data Source**: Receives seconds from controller via nRF24L01+
+- **Architecture**: Struct-based design with radio_common library integration
+- **Display**: WS2815 LED strips with 7-segment mapping
+- **Testing**: Built-in button-activated number cycling test
 
 ## Development Workflow
 
@@ -106,6 +109,20 @@ typedef struct {
 } SystemState;
 ```
 
+### PlayClockDisplay Structure
+```c
+typedef struct {
+  bool initialized;
+  display_mode_t current_mode;
+  uint32_t last_update_time;
+  led_strip_t *led_strip;
+  uint8_t brightness;
+  segment_range_t segments[PLAY_CLOCK_DIGITS][SEGMENTS_PER_DIGIT];
+  color_t color_off, color_on, color_warning, color_error;
+  uint8_t current_digits[PLAY_CLOCK_DIGITS];
+} PlayClockDisplay;
+```
+
 ### Radio Configuration
 - **Module**: nRF24L01+ (2.4 GHz)
 - **Channel**: 76 (2.476 GHz)
@@ -158,3 +175,38 @@ typedef struct {
 - **Controller-driven** operation with nRF24L01+ radio communication
 - **Link monitoring** - tracks connection status with timeout detection
 - **Status LED feedback** - visual indication of connection state
+- **Button debouncing** - proper debouncing for test button input
+- **LED segment mapping** - 7-segment display with WS2815 LED strips
+- **Display modes** - Stop, Run, Reset, Error modes with visual patterns
+- **Hardware testing** - built-in test patterns and number cycling
+
+### Key Implementation Details
+
+#### Main Application Structure
+```c
+void app_main(void) {
+  setup();  // Initialize hardware and radio
+  while (1) {
+    loop(); // Main processing loop
+  }
+}
+```
+
+#### Display Driver Features
+- **7-segment mapping**: Each digit uses 7 segments with specific LED ranges
+- **LED strip buffer**: 32-bit color buffer for WS2815 communication
+- **Brightness control**: Adjustable brightness (0-255)
+- **Test patterns**: Hardware verification and number cycling tests
+- **Error handling**: Visual error patterns for hardware failures
+
+#### Radio Communication
+- **radio_common integration**: Uses shared nRF24L01+ driver library
+- **FIFO monitoring**: Checks RX FIFO for incoming data
+- **Register debugging**: Radio register dump for troubleshooting
+- **Auto-ACK**: Enabled for reliable data transmission
+
+#### Button Testing
+- **Boot button (GPIO0)**: Active-low input with pullup
+- **Debouncing**: 50ms debounce time for reliable detection
+- **Number cycling**: Displays 00-99 sequence for testing
+- **Hardware verification**: LED test pattern on startup

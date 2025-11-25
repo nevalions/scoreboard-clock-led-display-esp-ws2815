@@ -1,14 +1,15 @@
 # Play Clock Module
 
-ESP32-based wireless play clock display for scoreboard systems. Shows seconds (SS) on large 7-segment LED displays and receives timing data wirelessly from a central controller.
+ESP32-based wireless play clock display for scoreboard systems. Shows seconds (SS) on large 7-segment LED displays and receives timing data wirelessly from a central controller via nRF24L01+ radio.
 
 ## Overview
 
 The Play Clock module is a pure display unit that:
-- Displays seconds (00-99) on large LED digits
-- Receives timing data wirelessly from controller
-- Shows only controller data without local logic
-- Operates as a simple display peripheral
+- Displays seconds (00-99) on large LED digits using WS2815 LED strips
+- Receives timing data wirelessly via nRF24L01+ radio communication
+- Shows only controller data without local timing logic
+- Operates as a simple display peripheral with status monitoring
+- Includes built-in test functionality via boot button
 
 ## Hardware
 
@@ -24,6 +25,8 @@ The Play Clock module is a pure display unit that:
 | Radio CE | GPIO5 | Radio chip enable |
 | Radio CSN | GPIO4 | Radio chip select |
 | Status LED | GPIO2 | System status indicator |
+| LED Strip Data | GPIO13 | WS2815 LED strip data line |
+| Test Button | GPIO0 | Boot button (active low) |
 
 ### Display Specifications
 - **Digits**: 2 (seconds display - SS format)
@@ -41,18 +44,27 @@ The Play Clock module is a pure display unit that:
 - **Smart Blinking**: Different blink rates for connected/disconnected states
 - **Error Display**: Shows error pattern on hardware failure
 - **Timeout Detection**: 10-second timeout with visual warning
+- **Built-in Testing**: Number cycling test via boot button (GPIO0)
+- **LED Test Pattern**: Hardware verification pattern on startup
+- **Display Modes**: Stop, Run, Reset, and Error modes with visual indicators
 
 ### Communication Protocol
 - **Radio Module**: nRF24L01+ (2.4 GHz) wireless communication
 - **Data Format**: 3-byte payload [seconds_high, seconds_low, sequence]
-- **Update Rate**: Receives data every 250ms from controller
+- **Channel**: 76 (2.476 GHz)
+- **Data Rate**: 1 Mbps
+- **Payload Size**: 32 bytes (controller sends 3 bytes)
+- **Auto-ACK**: Enabled for reliable transmission
 - **Pure Display**: Shows received seconds without local processing
+- **Radio Library**: Uses radio_common library for nRF24L01+ operations
 
 ### Status LED Behavior
 - **Connected**: Slow blink (2 second period - 1s on, 1s off)
 - **Disconnected**: Fast blink (200ms period - 100ms on, 100ms off)
 - **Link Timeout**: 10 seconds without received data triggers disconnection
 - **Link Recovery**: Automatic when data reception resumes
+- **Hardware Error**: Fast blink (250ms period) if radio initialization fails
+- **Display Error**: Shows error pattern on LED strips if display fails
 
 ## Development
 
@@ -74,6 +86,9 @@ idf.py build
 - **Framework**: ESP-IDF v6.1-dev
 - **Target**: ESP32 microcontroller
 - **Build System**: CMake with ESP-IDF
+- **Radio Library**: radio_common (shared nRF24L01+ driver)
+- **LED Driver**: ESP-IDF LED Strip driver for WS2815
+- **Architecture**: Struct-based design with pure display logic
 
 ## Troubleshooting
 
@@ -93,6 +108,9 @@ idf.py build
 - Check serial monitor for error messages
 - Verify ESP32 power and boot sequence
 - Check for hardware conflicts (pin assignments)
+- **Radio Debug**: Radio register dump available in serial logs
+- **Button Test**: Press boot button (GPIO0) to run number cycling test
+- **LED Test**: Automatic test pattern runs on startup for verification
 
 ## Technical Specifications
 
