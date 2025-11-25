@@ -180,6 +180,97 @@ typedef struct {
 - **Display modes** - Stop, Run, Reset, Error modes with visual patterns
 - **Hardware testing** - built-in test patterns and number cycling
 
+### Code Quality and Refactoring Guidelines
+
+#### Constants and Magic Numbers
+- **Extract all magic numbers** to named constants with descriptive names
+- **Use descriptive prefixes** for constant groups (e.g., `WS2815_`, `TEST_`, `SEGMENT_`)
+- **Group related constants** together in logical sections
+- **Use appropriate units** in constant names (e.g., `_MS`, `_US` for timing)
+
+```c
+// Good examples
+#define WS2815_BIT_ONE_HIGH_US 1
+#define TEST_COLOR_DELAY_MS 1000
+#define SEGMENT_A_OFFSET 0
+#define LEDS_PER_DIGIT 450
+```
+
+#### Helper Functions
+- **Extract repeated operations** into reusable helper functions
+- **Use descriptive function names** that clearly indicate purpose
+- **Keep functions focused** on single responsibilities
+- **Prefer static functions** for file-scope helpers
+
+```c
+// Good examples
+static void fill_all_leds(color_t color, uint8_t brightness);
+static void send_ws2815_bit(bool bit_value);
+static void test_single_led_color(PlayClockDisplay *display, color_t color, const char* color_name);
+```
+
+#### Variable Naming
+- **Use descriptive names** that clearly indicate purpose and type
+- **Add suffixes for clarity** (e.g., `_ms` for milliseconds, `_state` for booleans)
+- **Be consistent** with naming patterns across the codebase
+- **Avoid abbreviations** unless widely understood
+
+```c
+// Good examples
+PlayClockDisplay play_clock_display;  // Not just "display"
+uint32_t last_button_press_time_ms;   // Not just "last_time"
+bool button_pressed_state;             // Not just "pressed"
+```
+
+#### Code Duplication
+- **Eliminate repetitive patterns** through helper functions
+- **Consolidate similar operations** into parameterized functions
+- **Use loops and iteration** instead of repeated code blocks
+- **Create test helpers** for common testing patterns
+
+#### Type Safety
+- **Add const correctness** to read-only function parameters
+- **Use appropriate types** for values (e.g., `uint32_t` for timestamps)
+- **Prefer explicit types** over implicit conversions
+- **Use enum types** for related constants
+
+### Recent Refactoring Examples
+
+#### Constants Extraction
+```c
+// Before: Magic numbers scattered throughout code
+esp_rom_delay_us(1);  // What does this mean?
+vTaskDelay(pdMS_TO_TICKS(200));  // Why 200ms?
+
+// After: Named constants with clear meaning
+esp_rom_delay_us(WS2815_BIT_ONE_HIGH_US);
+vTaskDelay(pdMS_TO_TICKS(NUMBER_CYCLE_DELAY_MS));
+```
+
+#### Helper Function Creation
+```c
+// Before: Repeated LED filling code
+for (int i = 0; i < LED_COUNT; i++) {
+  led_buffer[i] = rgb_to_ws2815((color_t){255, 0, 0}, 100);
+}
+
+// After: Reusable helper function
+fill_all_leds((color_t){255, 0, 0}, TEST_COLOR_BRIGHTNESS);
+```
+
+#### Variable Naming Improvement
+```c
+// Before: Generic names
+static PlayClockDisplay display;
+static RadioComm radio;
+static uint32_t last_button_press_time;
+
+// After: Descriptive names
+static PlayClockDisplay play_clock_display;
+static RadioComm nrf24_radio;
+static uint32_t last_button_press_time_ms;
+```
+
 ### Key Implementation Details
 
 #### Main Application Structure
@@ -210,3 +301,32 @@ void app_main(void) {
 - **Debouncing**: 50ms debounce time for reliable detection
 - **Number cycling**: Displays 00-99 sequence for testing
 - **Hardware verification**: LED test pattern on startup
+
+### Memory Safety and C Programming Best Practices
+
+#### Memory Management
+- **Stack allocation preferred** over dynamic allocation for predictable timing
+- **Fixed-size buffers** for LED operations to prevent overflow
+- **Bounds checking** in all array access operations
+- **Static allocation** for large data structures (LED buffer, display state)
+
+#### Common C Issues to Avoid
+- **Integer overflow** in timestamp calculations (use appropriate types)
+- **Buffer overflow** in LED operations (validate array indices)
+- **Race conditions** in interrupt handling (disable interrupts during critical sections)
+- **Stack overflow** in FreeRTOS tasks (monitor stack usage)
+- **Magic numbers** without clear meaning (use named constants)
+
+#### Defensive Programming
+- **Null pointer checks** in all public functions
+- **Parameter validation** before dereferencing pointers
+- **Error handling** with graceful degradation
+- **Logging** for debugging and troubleshooting
+- **State validation** before hardware operations
+
+#### Performance Considerations
+- **Timing-critical sections** for WS2815 communication
+- **Interrupt management** during LED data transmission
+- **Efficient algorithms** for LED buffer operations
+- **Memory locality** for frequently accessed data
+- **Minimize blocking operations** in main loop
