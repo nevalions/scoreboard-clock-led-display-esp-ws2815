@@ -4,8 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// LED strip configuration for Play Clock (mock)
+// Forward declaration for LED strip handle
+typedef struct led_strip_s led_strip_t;
+
+// WS2815 LED strip configuration for Play Clock
 #define LED_COUNT 900 // Approximate total LEDs for 2 digits
+#define LED_STRIP_PIN GPIO_NUM_13 // Data pin for WS2815 LED strip
 
 // 7-segment display configuration for Play Clock (2 digits)
 #define PLAY_CLOCK_DIGITS 2
@@ -52,9 +56,11 @@ typedef struct {
   display_mode_t current_mode;
   uint32_t last_update_time;
 
-  // LED strip buffer
-  uint8_t *led_buffer;
-  size_t led_buffer_size;
+  // LED strip handle
+  led_strip_t *led_strip;
+  
+  // Brightness control (0-255)
+  uint8_t brightness;
 
   // Segment LED ranges for 2-digit play clock
   segment_range_t segments[PLAY_CLOCK_DIGITS][SEGMENTS_PER_DIGIT];
@@ -64,6 +70,9 @@ typedef struct {
   color_t color_on;
   color_t color_warning;
   color_t color_error;
+  
+  // Current display state
+  uint8_t current_digits[PLAY_CLOCK_DIGITS];
 } PlayClockDisplay;
 
 // Function declarations
@@ -74,3 +83,6 @@ void display_set_stop_mode(PlayClockDisplay *display);
 void display_set_reset_mode(PlayClockDisplay *display);
 void display_show_error(PlayClockDisplay *display);
 void display_update(PlayClockDisplay *display);
+void display_clear(PlayClockDisplay *display);
+void display_set_brightness(PlayClockDisplay *display, uint8_t brightness);
+void display_set_segment(PlayClockDisplay *display, uint8_t digit, segment_t segment, bool enable);
