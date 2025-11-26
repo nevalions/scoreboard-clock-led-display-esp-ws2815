@@ -393,6 +393,11 @@ void display_update(PlayClockDisplay *display) {
   if (!display->initialized)
     return;
 
+  // Force buffer access to prevent compiler optimization issues
+  // This simulates the effect of debug logging that was making it work
+  volatile uint8_t buffer_check = led_buffer[0] + led_buffer[1] + led_buffer[2];
+  (void)buffer_check; // Prevent unused variable warning
+
   // Transmit LED data using RMT
   rmt_transmit_config_t tx_config = {
     .loop_count = 0, // no transfer loop

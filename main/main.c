@@ -135,6 +135,20 @@ static void setup(void) {
     }
   }
 
+  // Run comprehensive display tests BEFORE radio initialization
+  ESP_LOGI(TAG, "=== DISPLAY TESTING PHASE ===");
+  display_set_stop_mode(&play_clock_display);
+  
+  ESP_LOGI(TAG, "Running LED test pattern for hardware verification...");
+  display_test_pattern(&play_clock_display);
+  
+  ESP_LOGI(TAG, "Display testing completed - ready for operation");
+  display_clear(&play_clock_display);
+  display_update(&play_clock_display);
+  vTaskDelay(pdMS_TO_TICKS(500)); // Brief pause before radio
+  
+  ESP_LOGI(TAG, "=== RADIO INITIALIZATION PHASE ===");
+
   if (!radio_begin(&nrf24_radio, RADIO_CE_PIN, RADIO_CSN_PIN)) {
     ESP_LOGE(TAG, "Failed to initialize radio");
     display_show_error(&play_clock_display);
@@ -151,12 +165,6 @@ static void setup(void) {
   // Dump radio registers for debugging
   vTaskDelay(pdMS_TO_TICKS(100)); // Let radio settle
   radio_dump_registers(&nrf24_radio);
-  
-  display_set_stop_mode(&play_clock_display);
-  
-  // Run LED test pattern for hardware verification
-  ESP_LOGI(TAG, "Running LED test pattern for hardware verification...");
-  display_test_pattern(&play_clock_display);
 
   ESP_LOGI(TAG, "Play Clock initialized successfully");
 }
