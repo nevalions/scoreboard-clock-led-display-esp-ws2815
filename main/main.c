@@ -33,9 +33,9 @@ static bool is_button_pressed(void) {
       (current_time_ms - last_button_press_time_ms > BUTTON_DEBOUNCE_MS)) {
     button_pressed_state = true;
     button_hold_start_time_ms = current_time_ms;
-    long_hold_triggered = false;
+    long_hold_triggered = false; // Reset long hold flag for new press
     last_button_press_time_ms = current_time_ms;
-    ESP_LOGI(TAG, "Button pressed detected");
+    ESP_LOGI(TAG, "Button pressed detected, long_hold_triggered reset to false");
     return true;
   } else if (!current_state && button_pressed_state) {
     button_pressed_state = false;
