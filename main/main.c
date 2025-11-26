@@ -22,9 +22,10 @@ static SystemState system_state;
 static uint32_t last_button_press_time_ms = 0;
 static bool button_pressed_state = false;
 static uint32_t button_hold_start_time_ms = 0;
+static bool long_hold_triggered = false;
 
 // Button debouncing and press detection
-static bool is_button_pressed(void) {
+static void check_button_press(void) {
   uint32_t current_time_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
   bool current_state = gpio_get_level(TEST_BUTTON_PIN) == 0; // Boot button is active low
   
@@ -32,23 +33,39 @@ static bool is_button_pressed(void) {
       (current_time_ms - last_button_press_time_ms > BUTTON_DEBOUNCE_MS)) {
     button_pressed_state = true;
     button_hold_start_time_ms = current_time_ms;
+    long_hold_triggered = false;
     last_button_press_time_ms = current_time_ms;
-    return true;
   } else if (!current_state) {
     button_pressed_state = false;
+  }
+}
+
+// Check for long hold (2+ seconds) - only triggers once per press
+static bool is_button_long_held(void) {
+  if (!button_pressed_state || long_hold_triggered) {
+    return false;
+  }
+  
+  uint32_t current_time_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+  if (current_time_ms - button_hold_start_time_ms >= LONG_HOLD_MS) {
+    long_hold_triggered = true;
+    return true;
   }
   
   return false;
 }
 
-// Check for long hold (2+ seconds)
-static bool is_button_long_held(void) {
-  if (!button_pressed_state) {
-    return false;
+// Check for button release (to trigger short press action if no long hold)
+static bool is_button_released(void) {
+  bool current_state = gpio_get_level(TEST_BUTTON_PIN) == 0;
+  
+  // Button was pressed and now released
+  if (button_pressed_state && !current_state) {
+    button_pressed_state = false;
+    return !long_hold_triggered; // Only return true if long hold wasn't triggered
   }
   
-  uint32_t current_time_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-  return (current_time_ms - button_hold_start_time_ms >= LONG_HOLD_MS);
+  return false;
 }
 
 // Number cycling test - displays 00-99 on both digits
@@ -142,18 +159,19 @@ static void setup(void) {
 static void loop(void) {
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
-  // Check for button press and long hold
-  if (is_button_pressed()) {
-    // Wait a bit to see if it's a long hold
-    vTaskDelay(pdMS_TO_TICKS(100));
-    
-    if (is_button_long_held()) {
-      ESP_LOGI(TAG, "Button long hold detected - running white LED mode");
-      run_white_led_mode();
-    } else {
-      ESP_LOGI(TAG, "Test button pressed - running number cycling test");
-      run_number_cycling_test();
-    }
+  // Check button state changes
+  check_button_press();
+  
+  // Check for button long hold
+  if (is_button_long_held()) {
+    ESP_LOGI(TAG, "Button long hold detected - running white LED mode");
+    run_white_led_mode();
+  }
+  
+  // Check for button release (short press)
+  if (is_button_released()) {
+    ESP_LOGI(TAG, "Test button released - running number cycling test");
+    run_number_cycling_test();
   }
 
   // Enable debug logging temporarily
