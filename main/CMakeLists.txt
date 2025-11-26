@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "main.c" "radio_comm.c" "display_driver.c" "../../radio-common/src/radio_common.c"
+    SRCS "main.c" "radio_comm.c" "display_driver.c" "led_strip_encoder.c" "../../radio-common/src/radio_common.c"
     INCLUDE_DIRS "../include" "../../radio-common/include"
     REQUIRES driver esp_common esp_driver_gpio esp_driver_spi esp_driver_rmt
 )

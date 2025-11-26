@@ -4,8 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// Forward declaration for LED strip handle
+// Forward declarations
 typedef struct led_strip_s led_strip_t;
+struct rmt_channel_t;
+typedef struct rmt_channel_t *rmt_channel_handle_t;
+struct rmt_encoder_t;
+typedef struct rmt_encoder_t *rmt_encoder_handle_t;
 
 // WS2815 LED strip configuration for Play Clock
 #define LED_COUNT 900 // Approximate total LEDs for 2 digits
@@ -58,6 +62,10 @@ typedef struct {
 
   // LED strip handle
   led_strip_t *led_strip;
+  
+  // RMT handles for WS2815 communication
+  rmt_channel_handle_t rmt_channel;
+  rmt_encoder_handle_t rmt_encoder;
   
   // Brightness control (0-255)
   uint8_t brightness;

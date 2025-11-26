@@ -1,19 +1,17 @@
 #include "../include/display_driver.h"
+#include "../include/led_strip_encoder.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
+#include "driver/rmt_tx.h"
 #include <stdlib.h>
 #include <string.h>
 
 static const char *TAG = "DISPLAY_DRIVER";
 
-// WS2815 timing constants (microseconds)
-#define WS2815_BIT_ONE_HIGH_US 1
-#define WS2815_BIT_ONE_LOW_US 1
-#define WS2815_BIT_ZERO_HIGH_US 0
-#define WS2815_BIT_ZERO_LOW_US 1
-#define WS2815_RESET_PULSE_US 50
+// RMT configuration for WS2815
+#define RMT_LED_STRIP_RESOLUTION_HZ 10000000 // 10MHz resolution, 1 tick = 0.1us
 
 // Test pattern timing constants (milliseconds)
 #define TEST_COLOR_DELAY_MS 1000
@@ -43,7 +41,7 @@ static const uint8_t digit_patterns[10] = {
 };
 
 // LED strip buffer
-static uint32_t led_buffer[LED_COUNT];
+static uint8_t led_buffer[LED_COUNT * 3]; // RGB buffer for RMT
 
 // LED offset constants for segment positioning
 #define SEGMENT_A_OFFSET 0
@@ -86,44 +84,28 @@ static void init_segment_mapping(PlayClockDisplay *display) {
   }
 }
 
-// Convert RGB color to WS2815 format with brightness
-static uint32_t rgb_to_ws2815(color_t color, uint8_t brightness) {
-  uint8_t r = (color.r * brightness) / 255;
-  uint8_t g = (color.g * brightness) / 255;
-  uint8_t b = (color.b * brightness) / 255;
-  return ((uint32_t)g << 16) | ((uint32_t)r << 8) | b; // GRB format for WS2815
-}
-
-// Set LED color in buffer
+// Set LED color in buffer (RGB format for RMT encoder)
 static void set_led_color(uint16_t led_index, color_t color, uint8_t brightness) {
   if (led_index < LED_COUNT) {
-    led_buffer[led_index] = rgb_to_ws2815(color, brightness);
+    uint8_t r = (color.r * brightness) / 255;
+    uint8_t g = (color.g * brightness) / 255;
+    uint8_t b = (color.b * brightness) / 255;
+    
+    // RMT encoder expects RGB format
+    led_buffer[led_index * 3 + 0] = g; // Green
+    led_buffer[led_index * 3 + 1] = r; // Red  
+    led_buffer[led_index * 3 + 2] = b; // Blue
   }
 }
 
 // Helper function to fill all LEDs with a specific color
 static void fill_all_leds(color_t color, uint8_t brightness) {
   for (int i = 0; i < LED_COUNT; i++) {
-    led_buffer[i] = rgb_to_ws2815(color, brightness);
+    set_led_color(i, color, brightness);
   }
 }
 
-// Helper function to send WS2815 bit with proper timing
-static void send_ws2815_bit(bool bit_value) {
-  if (bit_value) {
-    // '1' bit: ~0.7us high, ~0.6us low
-    gpio_set_level(LED_STRIP_PIN, 1);
-    esp_rom_delay_us(WS2815_BIT_ONE_HIGH_US);
-    gpio_set_level(LED_STRIP_PIN, 0);
-    esp_rom_delay_us(WS2815_BIT_ONE_LOW_US);
-  } else {
-    // '0' bit: ~0.35us high, ~0.8us low
-    gpio_set_level(LED_STRIP_PIN, 1);
-    esp_rom_delay_us(WS2815_BIT_ZERO_HIGH_US);
-    gpio_set_level(LED_STRIP_PIN, 0);
-    esp_rom_delay_us(WS2815_BIT_ZERO_LOW_US);
-  }
-}
+
 
 // Set segment LEDs
 static void set_segment_leds(PlayClockDisplay *display, uint8_t digit, segment_t segment, color_t color) {
@@ -136,26 +118,46 @@ static void set_segment_leds(PlayClockDisplay *display, uint8_t digit, segment_t
 }
 
 bool display_begin(PlayClockDisplay *display) {
-  ESP_LOGI(TAG, "Initializing WS2815 display");
+  ESP_LOGI(TAG, "Initializing WS2815 display with RMT");
 
   // Initialize structure
   memset(display, 0, sizeof(PlayClockDisplay));
 
-  // Configure GPIO for LED strip data pin
-  ESP_LOGI(TAG, "Configuring GPIO pin %d for WS2815 data line", LED_STRIP_PIN);
-  gpio_config_t io_conf = {
-    .pin_bit_mask = (1ULL << LED_STRIP_PIN),
-    .mode = GPIO_MODE_OUTPUT,
-    .pull_up_en = GPIO_PULLUP_DISABLE,
-    .pull_down_en = GPIO_PULLDOWN_DISABLE,
-    .intr_type = GPIO_INTR_DISABLE
+  // Configure RMT TX channel for WS2815
+  ESP_LOGI(TAG, "Configuring RMT channel for WS2815 on GPIO %d", LED_STRIP_PIN);
+  rmt_tx_channel_config_t tx_chan_config = {
+    .clk_src = RMT_CLK_SRC_DEFAULT,
+    .gpio_num = LED_STRIP_PIN,
+    .mem_block_symbols = 64,
+    .resolution_hz = RMT_LED_STRIP_RESOLUTION_HZ,
+    .trans_queue_depth = 4,
   };
-  esp_err_t gpio_result = gpio_config(&io_conf);
-  if (gpio_result != ESP_OK) {
-    ESP_LOGE(TAG, "Failed to configure GPIO pin %d: %s", LED_STRIP_PIN, esp_err_to_name(gpio_result));
+  esp_err_t rmt_result = rmt_new_tx_channel(&tx_chan_config, &display->rmt_channel);
+  if (rmt_result != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to create RMT TX channel: %s", esp_err_to_name(rmt_result));
     return false;
   }
-  ESP_LOGI(TAG, "GPIO pin %d configured successfully", LED_STRIP_PIN);
+
+  // Install LED strip encoder
+  ESP_LOGI(TAG, "Installing LED strip encoder");
+  led_strip_encoder_config_t encoder_config = {
+    .resolution = RMT_LED_STRIP_RESOLUTION_HZ,
+  };
+  rmt_result = rmt_new_led_strip_encoder(&encoder_config, &display->rmt_encoder);
+  if (rmt_result != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to create LED strip encoder: %s", esp_err_to_name(rmt_result));
+    return false;
+  }
+
+  // Enable RMT channel
+  ESP_LOGI(TAG, "Enabling RMT TX channel");
+  rmt_result = rmt_enable(display->rmt_channel);
+  if (rmt_result != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to enable RMT TX channel: %s", esp_err_to_name(rmt_result));
+    return false;
+  }
+
+  ESP_LOGI(TAG, "RMT channel configured successfully");
 
   // Initialize segment mapping
   ESP_LOGI(TAG, "Initializing segment mapping for %d digits", PLAY_CLOCK_DIGITS);
@@ -391,21 +393,20 @@ void display_update(PlayClockDisplay *display) {
   if (!display->initialized)
     return;
 
-  // Simple GPIO bit-banging for WS2815 (basic implementation)
-  // In a production system, this should use RMT for proper timing
-  for (int i = 0; i < LED_COUNT; i++) {
-    uint32_t color = led_buffer[i];
-    
-    // Send 24 bits (GRB format) using helper function
-    for (int bit = 23; bit >= 0; bit--) {
-      bool bit_value = (color >> bit) & 1;
-      send_ws2815_bit(bit_value);
-    }
+  // Transmit LED data using RMT
+  rmt_transmit_config_t tx_config = {
+    .loop_count = 0, // no transfer loop
+  };
+  
+  esp_err_t result = rmt_transmit(display->rmt_channel, display->rmt_encoder, 
+                                 led_buffer, sizeof(led_buffer), &tx_config);
+  if (result != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to transmit LED data: %s", esp_err_to_name(result));
+    return;
   }
   
-  // Reset pulse
-  gpio_set_level(LED_STRIP_PIN, 0);
-  esp_rom_delay_us(WS2815_RESET_PULSE_US);
+  // Wait for transmission to complete
+  rmt_tx_wait_all_done(display->rmt_channel, portMAX_DELAY);
 
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
   if (current_time - display->last_update_time > 1000) {
