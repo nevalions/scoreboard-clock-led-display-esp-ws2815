@@ -413,3 +413,12 @@ void display_update(PlayClockDisplay *display) {
     display->last_update_time = current_time;
   }
 }
+
+void display_set_all_white(PlayClockDisplay *display) {
+  if (!display->initialized)
+    return;
+    
+  ESP_LOGI(TAG, "Setting all LEDs to white");
+  fill_all_leds((color_t){255, 255, 255}, display->brightness);
+  display_update(display);
+}

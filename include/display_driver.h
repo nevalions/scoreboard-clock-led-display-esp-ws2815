@@ -88,3 +88,4 @@ void display_set_brightness(PlayClockDisplay *display, uint8_t brightness);
 void display_set_segment(PlayClockDisplay *display, uint8_t digit, segment_t segment, bool enable);
 void display_test_pattern(PlayClockDisplay *display);
 bool display_connection_test(PlayClockDisplay *display);
+void display_set_all_white(PlayClockDisplay *display);

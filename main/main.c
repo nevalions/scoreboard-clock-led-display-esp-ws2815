@@ -12,6 +12,7 @@ static const char *TAG = "PLAY_CLOCK";
 #define LINK_TIMEOUT_MS 10000
 #define BUTTON_DEBOUNCE_MS 50
 #define NUMBER_CYCLE_DELAY_MS 200
+#define LONG_HOLD_MS 2000  // 2 seconds for long hold detection
 
 static PlayClockDisplay play_clock_display;
 static RadioComm nrf24_radio;
@@ -20,6 +21,7 @@ static SystemState system_state;
 // Button state tracking
 static uint32_t last_button_press_time_ms = 0;
 static bool button_pressed_state = false;
+static uint32_t button_hold_start_time_ms = 0;
 
 // Button debouncing and press detection
 static bool is_button_pressed(void) {
@@ -29,6 +31,7 @@ static bool is_button_pressed(void) {
   if (current_state && !button_pressed_state && 
       (current_time_ms - last_button_press_time_ms > BUTTON_DEBOUNCE_MS)) {
     button_pressed_state = true;
+    button_hold_start_time_ms = current_time_ms;
     last_button_press_time_ms = current_time_ms;
     return true;
   } else if (!current_state) {
@@ -36,6 +39,16 @@ static bool is_button_pressed(void) {
   }
   
   return false;
+}
+
+// Check for long hold (2+ seconds)
+static bool is_button_long_held(void) {
+  if (!button_pressed_state) {
+    return false;
+  }
+  
+  uint32_t current_time_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+  return (current_time_ms - button_hold_start_time_ms >= LONG_HOLD_MS);
 }
 
 // Number cycling test - displays 00-99 on both digits
@@ -54,6 +67,23 @@ static void run_number_cycling_test(void) {
   display_clear(&play_clock_display);
   display_update(&play_clock_display);
   ESP_LOGI(TAG, "Number cycling test completed");
+}
+
+// White LED mode - all LEDs white until button released
+static void run_white_led_mode(void) {
+  ESP_LOGI(TAG, "Starting white LED mode (hold button)");
+  
+  display_set_all_white(&play_clock_display);
+  
+  // Wait until button is released
+  while (gpio_get_level(TEST_BUTTON_PIN) == 0) {
+    vTaskDelay(pdMS_TO_TICKS(50));
+  }
+  
+  // Clear display after mode
+  display_clear(&play_clock_display);
+  display_update(&play_clock_display);
+  ESP_LOGI(TAG, "White LED mode completed");
 }
 
 static void setup(void) {
@@ -112,10 +142,18 @@ static void setup(void) {
 static void loop(void) {
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
-  // Check for button press
+  // Check for button press and long hold
   if (is_button_pressed()) {
-    ESP_LOGI(TAG, "Test button pressed - running number cycling test");
-    run_number_cycling_test();
+    // Wait a bit to see if it's a long hold
+    vTaskDelay(pdMS_TO_TICKS(100));
+    
+    if (is_button_long_held()) {
+      ESP_LOGI(TAG, "Button long hold detected - running white LED mode");
+      run_white_led_mode();
+    } else {
+      ESP_LOGI(TAG, "Test button pressed - running number cycling test");
+      run_number_cycling_test();
+    }
   }
 
   // Enable debug logging temporarily
