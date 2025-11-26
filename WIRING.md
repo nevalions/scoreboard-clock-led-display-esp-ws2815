@@ -145,6 +145,63 @@ The ESP32 Play Clock consists of three main components:
 - **LEDs per Segment**: 15 (horizontal) or 30 (vertical)
 - **Colors**: Orange (normal), Yellow (warning), Red (error)
 
+## 7-Segment LED Wiring Schema
+
+### Segment Layout (Per Digit)
+```
+     AAA (0-14)          ← Segment A: 15 LEDs horizontal
+    F     B
+    F     B              ← Segment F: 30 LEDs vertical (left)
+    F     B              ← Segment B: 30 LEDs vertical (right)
+    F     B
+     GGG (150-164)       ← Segment G: 15 LEDs horizontal (middle)
+    E     C
+    E     C              ← Segment E: 30 LEDs vertical (left)
+    E     C              ← Segment C: 30 LEDs vertical (right)
+    E     C
+     DDD (75-89)         ← Segment D: 15 LEDs horizontal (bottom)
+
+LED Index Range (Digit 0: LEDs 0-449, Digit 1: LEDs 450-899):
+Segment A: 0-14    (15 LEDs) - Top horizontal
+Segment B: 15-44   (30 LEDs) - Upper right vertical  
+Segment C: 45-74   (30 LEDs) - Lower right vertical
+Segment D: 75-89   (15 LEDs) - Bottom horizontal
+Segment E: 90-119  (30 LEDs) - Lower left vertical
+Segment F: 120-149 (30 LEDs) - Upper left vertical
+Segment G: 150-164 (15 LEDs) - Middle horizontal
+```
+
+### Complete 2-Digit LED Strip Layout
+```
+Digit 0 (Left)                    Digit 1 (Right)
+LEDs 0-449                        LEDs 450-899
+
+┌─────────────────────────────────┬─────────────────────────────────┐
+│ Segment A: LEDs 0-14            │ Segment A: LEDs 450-464        │
+│ Segment B: LEDs 15-44           │ Segment B: LEDs 465-494         │
+│ Segment C: LEDs 45-74           │ Segment C: LEDs 495-524         │
+│ Segment D: LEDs 75-89           │ Segment D: LEDs 525-539         │
+│ Segment E: LEDs 90-119          │ Segment E: LEDs 540-569         │
+│ Segment F: LEDs 120-149         │ Segment F: LEDs 570-599         │
+│ Segment G: LEDs 150-164         │ Segment G: LEDs 600-614         │
+│ Unused: LEDs 165-449            │ Unused: LEDs 615-899           │
+└─────────────────────────────────┴─────────────────────────────────┘
+```
+
+### Segment Connection Pattern (AB-BC-CD Flow)
+```
+Power Flow → Segment A → Segment B → Segment C → Segment D
+                    ↓         ↓         ↓
+                 Segment F ← Segment E ← Segment G
+```
+
+**Wiring Notes:**
+- Each segment is a continuous LED strip section
+- Segments B and C are adjacent (right side vertical)
+- Segments E and F are adjacent (left side vertical)  
+- Data flows from ESP32 GPIO13 through all segments sequentially
+- Total LEDs per digit: 450 (165 used for segments, 285 unused/spacer)
+
 ## Hardware Features
 
 ### Button Testing
