@@ -2,9 +2,21 @@
 
 ESP32-based wireless play clock display for scoreboard systems. Shows seconds (SS) on large 7-segment LED displays and receives timing data wirelessly from a central controller via nRF24L01+ radio.
 
+## Quick Start
+
+```bash
+# Activate ESP-IDF environment
+idf
+
+# Build project
+idf.py build
+```
+
+**Important**: This project should only be built, never flashed to hardware.
+
 ## Overview
 
-Pure display unit that:
+The Play Clock is a pure display unit that:
 - Displays seconds (00-99) on large LED digits using WS2815 LED strips
 - Receives timing data wirelessly via nRF24L01+ radio communication
 - Shows only controller data without local timing logic
@@ -66,22 +78,7 @@ Pure display unit that:
 - **Hardware Error**: Fast blink (250ms period) if radio initialization fails
 - **Display Error**: Shows error pattern on LED strips if display fails
 
-## Development
-
-For detailed development setup, build commands, code style guidelines, and workflow, see [AGENTS.md](AGENTS.md).
-
-### Quick Start
-```bash
-# Activate ESP-IDF environment
-idf
-
-# Build project
-idf.py build
-```
-
-**Important**: This project should only be built, never flashed to hardware.
-
-### Technology Stack
+## Technology Stack
 - **Language**: Native C (not C++)
 - **Framework**: ESP-IDF v6.1-dev
 - **Target**: ESP32 microcontroller
@@ -127,3 +124,7 @@ idf.py build
 - **Display Updates**: Immediate when new data received
 - **Link Timeout**: 10-second timeout detection
 - **Status LED**: 2s blink (connected), 200ms blink (disconnected)
+
+## Development
+
+For detailed development setup, build commands, code style guidelines, and workflow, see [AGENTS.md](AGENTS.md).

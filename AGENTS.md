@@ -1,75 +1,70 @@
-# AGENTS.md - ESP32 Play Clock Development Guide
+# ESP32 Play Clock Development Guide
 
 ## Project Overview
-- **Implementation**: Native C (converted from C++)
-- **Framework**: ESP-IDF v6.1-dev
-- **Target**: ESP32 microcontroller
-- **Status**: Controller-driven display implementation
-- **Data Source**: Receives seconds from controller via nRF24L01+
-- **Architecture**: Struct-based design with radio_common library integration
-- **Display**: WS2815 LED strips with 7-segment mapping
-- **Testing**: Built-in button-activated number cycling test
+
+| Aspect | Details |
+|--------|---------|
+| **Implementation** | Native C (converted from C++) |
+| **Framework** | ESP-IDF v6.1-dev |
+| **Target** | ESP32 microcontroller |
+| **Architecture** | Struct-based design with radio_common library integration |
+| **Display** | WS2815 LED strips with 7-segment mapping |
+| **Communication** | nRF24L01+ wireless from controller |
+| **Testing** | Built-in button-activated number cycling test |
 
 ## Development Workflow
 
-### ESP-IDF Environment Setup
-
-Before running any ESP-IDF commands, you must activate the ESP-IDF environment:
+### Quick Start
 
 ```bash
-# Activate ESP-IDF environment (configured in ~/.zshrc)
+# Activate ESP-IDF environment
 idf
 
-# Then run build commands
+# Build project
 idf.py build
 ```
 
-### Environment Variables
-The following are automatically configured in your `.zshrc`:
+**IMPORTANT**: This project should only be built, never flashed to hardware.
+
+### Environment Setup
+
+The ESP-IDF environment is automatically configured in your `.zshrc`:
 - `IDF_PATH=/home/linroot/esp-idf`
 - `PATH="$IDF_PATH/tools:$PATH"`
 - Custom `idf()` function that sources `$IDF_PATH/export.sh`
 
 ### Build Commands
+
 ```bash
-# Build project
-idf.py build
-
-# Clean build
-idf.py fullclean
-
-# Configure project
-idf.py menuconfig
+idf.py build          # Build project
+idf.py fullclean      # Clean build
+idf.py menuconfig     # Configure project
 ```
 
-**IMPORTANT**: This project should only be built, never flashed to hardware. Use `idf.py build` only.
+### Git Workflow (Submodule)
 
-### Git Workflow (Recursive Commits)
-
-Since this is a submodule of the parent scoreboard_clock repository, commits must be handled recursively:
+Since this is a submodule of the parent scoreboard_clock repository:
 
 ```bash
-# Step 1: Commit and push changes in the submodule
+# Method 1: Manual recursive workflow
 git add .
 git commit -m "your commit message"
 git push
-
-# Step 2: Update parent repository to point to new commit
 cd ..  # Go to parent repository
 git add play_clock
 git commit -m "Update play_clock submodule"
 git push
 
-# OR use the automated recursive workflow:
+# Method 2: Automated recursive workflow
 git submodule update --remote --merge
 git add play_clock
 git commit -m "Update submodule"
 git push
 ```
 
-**Important**: Always commit submodule changes first, then update the parent repository to reference the new commit. The parent repo only tracks which commit the submodule points to, not the submodule content directly.
+**Important**: Always commit submodule changes first, then update the parent repository. The parent repo only tracks which commit the submodule points to.
 
-For project overview, hardware specifications, and user documentation, see [README.md](README.md).
+For project overview and hardware specifications, see [README.md](README.md).
 
 ## Communication Protocol
 
@@ -79,7 +74,9 @@ The play clock receives 3-byte packets from the controller:
 - **Byte 1**: Seconds low byte  
 - **Byte 2**: Sequence number
 
-### SystemState Structure
+### Data Structures
+
+#### SystemState
 ```c
 typedef struct {
   uint16_t seconds;        // 0-65535, combines bytes 0-1
@@ -89,7 +86,7 @@ typedef struct {
 } SystemState;
 ```
 
-### PlayClockDisplay Structure
+#### PlayClockDisplay
 ```c
 typedef struct {
   bool initialized;
@@ -118,32 +115,34 @@ typedef struct {
 - Maximum line length: 120 characters
 
 ### Naming Conventions
-- Constants: `UPPER_SNAKE_CASE` (e.g., `LED_STRIP_PIN`, `STATUS_TIMEOUT_MS`)
-- Variables: `lower_snake_case` (e.g., `system_state`, `last_status_time`)
-- Structs: `PascalCase` (e.g., `PlayClockDisplay`, `RadioComm`)
-- Functions: `lower_snake_case()` (e.g., `display_begin()`, `radio_begin()`)
-- Tags: `UPPER_SNAKE_CASE` (e.g., `TAG = "PLAY_CLOCK"`)
+| Type | Convention | Examples |
+|------|------------|----------|
+| Constants | `UPPER_SNAKE_CASE` | `LED_STRIP_PIN`, `STATUS_TIMEOUT_MS` |
+| Variables | `lower_snake_case` | `system_state`, `last_status_time` |
+| Structs | `PascalCase` | `PlayClockDisplay`, `RadioComm` |
+| Functions | `lower_snake_case()` | `display_begin()`, `radio_begin()` |
+| Tags | `UPPER_SNAKE_CASE` | `TAG = "PLAY_CLOCK"` |
 
 ### Types & Headers
-- Use standard C types: `uint8_t`, `uint16_t`, `bool`, `uint32_t`
-- Header guards: `#pragma once`
-- C headers: `<stdint.h>`, `<stdbool.h>`
-- ESP-IDF headers: `#include "esp_log.h"`, `#include "freertos/FreeRTOS.h"`
-- Project headers: `#include "display_driver.h"`, `#include "radio_comm.h"`
+- **Standard C types**: `uint8_t`, `uint16_t`, `bool`, `uint32_t`
+- **Header guards**: `#pragma once`
+- **C headers**: `<stdint.h>`, `<stdbool.h>`
+- **ESP-IDF headers**: `#include "esp_log.h"`, `#include "freertos/FreeRTOS.h"`
+- **Project headers**: `#include "display_driver.h"`, `#include "radio_comm.h"`
 
 ### Error Handling
-- ESP-IDF logging: `ESP_LOGI(TAG, "message")`, `ESP_LOGE(TAG, "error")`
-- Return `bool` for success/failure in initialization functions
-- Test assertions: `TEST_ASSERT_TRUE(condition)`, `TEST_ASSERT_EQUAL(expected, actual)`
-- Handle hardware failures gracefully with infinite loops or error states
+- **ESP-IDF logging**: `ESP_LOGI(TAG, "message")`, `ESP_LOGE(TAG, "error")`
+- **Return values**: `bool` for success/failure in initialization functions
+- **Test assertions**: `TEST_ASSERT_TRUE(condition)`, `TEST_ASSERT_EQUAL(expected, actual)`
+- **Hardware failures**: Handle gracefully with infinite loops or error states
 
 ### ESP-IDF Specific
-- Entry point: `void app_main(void)`
-- FreeRTOS delays: `vTaskDelay(pdMS_TO_TICKS(ms))`
-- GPIO control: `gpio_set_direction(pin, GPIO_MODE_OUTPUT)`, `gpio_set_level(pin, level)`
-- Memory: Prefer stack allocation, use `malloc()` only when necessary
+- **Entry point**: `void app_main(void)`
+- **FreeRTOS delays**: `vTaskDelay(pdMS_TO_TICKS(ms))`
+- **GPIO control**: `gpio_set_direction(pin, GPIO_MODE_OUTPUT)`, `gpio_set_level(pin, level)`
+- **Memory**: Prefer stack allocation, use `malloc()` only when necessary
 
-### C Programming Patterns
+### Architecture Patterns
 - **Struct-based design** instead of classes (fully implemented)
 - **Pass struct pointer** as first parameter to functions
 - **Use `typedef struct`** for type definitions
@@ -157,6 +156,7 @@ typedef struct {
 - **LED segment mapping** - 7-segment display with WS2815 LED strips
 - **Display modes** - Stop, Run, Reset, Error modes with visual patterns
 - **Hardware testing** - built-in test patterns and number cycling
+- **Thread safety** - mutex protection for LED buffer operations
 
 ## Code Quality Guidelines
 
@@ -229,6 +229,7 @@ void app_main(void) {
 - **Brightness control**: Adjustable brightness (0-255)
 - **Test patterns**: Hardware verification and number cycling tests
 - **Error handling**: Visual error patterns for hardware failures
+- **Thread safety**: Mutex protection for all LED buffer operations
 
 ### Radio Communication
 - **radio_common integration**: Uses shared nRF24L01+ driver library
