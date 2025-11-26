@@ -51,15 +51,21 @@ static uint8_t led_buffer[LED_COUNT * 3]; // RGB buffer for RMT
 #define SEGMENT_E_OFFSET 90
 #define SEGMENT_F_OFFSET 120
 #define SEGMENT_G_OFFSET 150
-#define LEDS_PER_DIGIT 450
+// Physical LED base positions for each digit (actual wiring)
+#define DIGIT_0_BASE 0    // Digit 0 starts at LED 0
+#define DIGIT_1_BASE 450  // Digit 1 starts at LED 450
 
 // Initialize segment-to-LED mapping for 2-digit display
 static void init_segment_mapping(PlayClockDisplay *display) {
-  // Digit 0 (left digit) - LEDs 0-449
-  // Digit 1 (right digit) - LEDs 450-899
+  // Digit 0 (left digit) - uses LEDs 0-164
+  // Digit 1 (right digit) - uses LEDs 450-614
+  // LEDs 165-449 and 615-899 are unused gaps in wiring
+  
+  // Define actual base positions for each digit
+  uint16_t digit_base[PLAY_CLOCK_DIGITS] = {DIGIT_0_BASE, DIGIT_1_BASE};
   
   for (int digit = 0; digit < PLAY_CLOCK_DIGITS; digit++) {
-    uint16_t base_offset = digit * LEDS_PER_DIGIT;
+    uint16_t base_offset = digit_base[digit];
     
     // Segment A (top horizontal) - 15 LEDs
     display->segments[digit][SEGMENT_A] = (segment_range_t){base_offset + SEGMENT_A_OFFSET, LEDS_PER_SEGMENT_HORIZONTAL};
@@ -276,7 +282,7 @@ void display_show_error(PlayClockDisplay *display) {
 }
 
 void display_clear(PlayClockDisplay *display) {
-  if (!display->initialized)
+  if (!display)
     return;
 
   // Clear all LEDs using helper function
