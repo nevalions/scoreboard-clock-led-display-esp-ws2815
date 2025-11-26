@@ -201,8 +201,10 @@ static void loop(void) {
   esp_log_level_set("RADIO_COMM", ESP_LOG_DEBUG);
 
   if (radio_receive_message(&nrf24_radio, &system_state)) {
-    // Update display with controller data
+    // Set display mode based on system state
+    display_set_run_mode(&play_clock_display);
     display_set_time(&play_clock_display, system_state.seconds);
+    
     ESP_LOGI(TAG, "Time update: seconds=%d, seq=%d",
              system_state.seconds, system_state.sequence);
     // Update current_time after receiving message

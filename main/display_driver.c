@@ -43,6 +43,9 @@ static const uint8_t digit_patterns[10] = {
 // LED strip buffer
 static uint8_t led_buffer[LED_COUNT * 3]; // RGB buffer for RMT
 
+// Display driver mutex for thread-safe operations
+static SemaphoreHandle_t display_mutex = NULL;
+
 // LED offset constants for segment positioning
 #define SEGMENT_A_OFFSET 0
 #define SEGMENT_B_OFFSET 15
@@ -89,7 +92,7 @@ static void init_segment_mapping(PlayClockDisplay *display) {
   }
 }
 
-// Set LED color in buffer (RGB format for RMT encoder)
+// Set LED color in buffer (RGB format for RMT encoder) - thread-safe
 static void set_led_color(uint16_t led_index, color_t color, uint8_t brightness) {
   if (led_index < LED_COUNT) {
     uint8_t r = (color.r * brightness) / 255;
@@ -103,7 +106,7 @@ static void set_led_color(uint16_t led_index, color_t color, uint8_t brightness)
   }
 }
 
-// Helper function to fill all LEDs with a specific color
+// Helper function to fill all LEDs with a specific color - thread-safe
 static void fill_all_leds(color_t color, uint8_t brightness) {
   for (int i = 0; i < LED_COUNT; i++) {
     set_led_color(i, color, brightness);
@@ -112,7 +115,7 @@ static void fill_all_leds(color_t color, uint8_t brightness) {
 
 
 
-// Set segment LEDs
+// Set segment LEDs - thread-safe
 static void set_segment_leds(PlayClockDisplay *display, uint8_t digit, segment_t segment, color_t color) {
   if (digit >= PLAY_CLOCK_DIGITS || segment >= SEGMENTS_PER_DIGIT) return;
   
@@ -124,6 +127,15 @@ static void set_segment_leds(PlayClockDisplay *display, uint8_t digit, segment_t
 
 bool display_begin(PlayClockDisplay *display) {
   ESP_LOGI(TAG, "Initializing WS2815 display with RMT");
+
+  // Create display mutex if not already created
+  if (display_mutex == NULL) {
+    display_mutex = xSemaphoreCreateMutex();
+    if (display_mutex == NULL) {
+      ESP_LOGE(TAG, "Failed to create display mutex");
+      return false;
+    }
+  }
 
   // Initialize structure
   memset(display, 0, sizeof(PlayClockDisplay));
@@ -199,10 +211,14 @@ void display_set_time(PlayClockDisplay *display, uint16_t seconds) {
   if (!display->initialized)
     return;
 
+  // Thread-safe display operations
+  xSemaphoreTake(display_mutex, portMAX_DELAY);
+
   // Check for null signal (255 seconds = 0xFF)
   if (seconds == 255) {
     ESP_LOGI(TAG, "Received null signal (255 seconds) - clearing display");
     display_clear(display);
+    xSemaphoreGive(display_mutex);
     display_update(display);
     display->last_update_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
     return;
@@ -244,6 +260,8 @@ void display_set_time(PlayClockDisplay *display, uint16_t seconds) {
 
   // Log the time
   display->last_update_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+  
+  xSemaphoreGive(display_mutex);
 }
 
 
@@ -433,6 +451,9 @@ void display_update(PlayClockDisplay *display) {
   if (!display->initialized)
     return;
 
+  // Thread-safe display update
+  xSemaphoreTake(display_mutex, portMAX_DELAY);
+
   // Force buffer access to prevent compiler optimization issues
   // This simulates the effect of debug logging that was making it work
   volatile uint8_t buffer_check = led_buffer[0] + led_buffer[1] + led_buffer[2];
@@ -447,6 +468,7 @@ void display_update(PlayClockDisplay *display) {
                                  led_buffer, sizeof(led_buffer), &tx_config);
   if (result != ESP_OK) {
     ESP_LOGE(TAG, "Failed to transmit LED data: %s", esp_err_to_name(result));
+    xSemaphoreGive(display_mutex);
     return;
   }
   
@@ -461,6 +483,8 @@ void display_update(PlayClockDisplay *display) {
     ESP_LOGD(TAG, "Display update - mode: %d", display->current_mode);
     display->last_update_time = current_time;
   }
+  
+  xSemaphoreGive(display_mutex);
 }
 
 void display_set_all_white(PlayClockDisplay *display) {
@@ -468,6 +492,11 @@ void display_set_all_white(PlayClockDisplay *display) {
     return;
     
   ESP_LOGI(TAG, "Setting all LEDs to white");
+  
+  // Thread-safe white LED setting
+  xSemaphoreTake(display_mutex, portMAX_DELAY);
   fill_all_leds((color_t){255, 255, 255}, display->brightness);
+  xSemaphoreGive(display_mutex);
+  
   display_update(display);
 }
