@@ -35,9 +35,11 @@ static bool is_button_pressed(void) {
     button_hold_start_time_ms = current_time_ms;
     long_hold_triggered = false;
     last_button_press_time_ms = current_time_ms;
+    ESP_LOGI(TAG, "Button pressed detected");
     return true;
-  } else if (!current_state) {
+  } else if (!current_state && button_pressed_state) {
     button_pressed_state = false;
+    ESP_LOGI(TAG, "Button released detected");
   }
   
   return false;
@@ -50,7 +52,9 @@ static bool is_button_long_held(void) {
   }
   
   uint32_t current_time_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
-  if (current_time_ms - button_hold_start_time_ms >= LONG_HOLD_MS) {
+  uint32_t hold_time = current_time_ms - button_hold_start_time_ms;
+  if (hold_time >= LONG_HOLD_MS) {
+    ESP_LOGI(TAG, "Long hold detected, hold_time=%d ms", hold_time);
     long_hold_triggered = true;
     return true;
   }
@@ -64,6 +68,7 @@ static bool is_button_released(void) {
   
   // Button was pressed and now released
   if (button_pressed_state && !current_state) {
+    ESP_LOGI(TAG, "Button release detected, long_hold_triggered=%d", long_hold_triggered);
     button_pressed_state = false;
     return !long_hold_triggered; // Only return true if long hold wasn't triggered
   }
@@ -164,6 +169,14 @@ static void loop(void) {
 
   // Update button state (this is needed to track press/release timing)
   is_button_pressed();
+  
+  // Debug: Show button state every 5 seconds
+  static uint32_t last_debug_time = 0;
+  if (current_time - last_debug_time > 5000) {
+    bool button_state = gpio_get_level(TEST_BUTTON_PIN) == 0;
+    ESP_LOGI(TAG, "Debug: button_state=%d, button_pressed_state=%d", button_state, button_pressed_state);
+    last_debug_time = current_time;
+  }
   
   // Check for button long hold
   if (is_button_long_held()) {
