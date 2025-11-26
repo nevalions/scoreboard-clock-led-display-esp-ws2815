@@ -37,9 +37,6 @@ static bool is_button_pressed(void) {
     last_button_press_time_ms = current_time_ms;
     ESP_LOGI(TAG, "Button pressed detected, long_hold_triggered reset to false");
     return true;
-  } else if (!current_state && button_pressed_state) {
-    button_pressed_state = false;
-    ESP_LOGI(TAG, "Button released detected");
   }
   
   return false;
@@ -167,8 +164,10 @@ static void setup(void) {
 static void loop(void) {
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
-  // Update button state (this is needed to track press/release timing)
-  is_button_pressed();
+  // Check for button press (for debouncing and state tracking)
+  if (is_button_pressed()) {
+    ESP_LOGI(TAG, "Button press detected");
+  }
   
   // Debug: Show button state every 5 seconds
   static uint32_t last_debug_time = 0;
