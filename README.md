@@ -101,6 +101,8 @@ The codebase has been refactored for improved maintainability:
 - **Variable Naming**: Consistent and descriptive naming conventions
 - **Code Duplication**: Eliminated repetitive patterns in test functions
 - **Type Safety**: Added const correctness where appropriate
+- **Code Organization**: Structured with clear separation of concerns
+- **Documentation**: Comprehensive inline documentation and comments
 
 ### Key Constants
 - **WS2815 Timing**: `WS2815_BIT_ONE_HIGH_US`, `WS2815_RESET_PULSE_US`
@@ -120,6 +122,7 @@ The codebase has been refactored for improved maintainability:
 - Check 12V power supply and connections
 - Verify LED strip wiring and data polarity
 - Confirm power injection at both ends of each digit
+- **Shared Ground**: ESP32 must share common ground with LED power supply and controller
 
 ### Radio Communication
 - Verify nRF24L01+ connections (CE, CSN, SPI)
@@ -127,6 +130,7 @@ The codebase has been refactored for improved maintainability:
 - Confirm controller is transmitting data
 - Check status LED behavior for connection issues
 - Monitor serial logs for timeout/recovery messages
+- **Shared Ground**: ESP32 must share common ground with controller for reliable communication
 
 ### System Errors
 - Check serial monitor for error messages
@@ -135,6 +139,7 @@ The codebase has been refactored for improved maintainability:
 - **Radio Debug**: Radio register dump available in serial logs
 - **Button Test**: Press boot button (GPIO0) to run number cycling test
 - **LED Test**: Automatic test pattern runs on startup for verification
+- **Ground Connection**: Ensure ESP32 shares ground with all connected systems
 
 ## Technical Specifications
 

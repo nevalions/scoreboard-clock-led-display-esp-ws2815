@@ -271,6 +271,12 @@ static RadioComm nrf24_radio;
 static uint32_t last_button_press_time_ms;
 ```
 
+#### Code Organization Improvements
+- **Modular Structure**: Clear separation between display, radio, and main logic
+- **Consistent Patterns**: Uniform error handling and initialization patterns
+- **Documentation**: Comprehensive inline documentation for all functions
+- **Type Safety**: Enhanced with const correctness and appropriate type usage
+
 ### Key Implementation Details
 
 #### Main Application Structure
@@ -330,3 +336,37 @@ void app_main(void) {
 - **Efficient algorithms** for LED buffer operations
 - **Memory locality** for frequently accessed data
 - **Minimize blocking operations** in main loop
+
+## Hardware Setup and Troubleshooting
+
+### Critical Ground Connection
+**Common Issue**: ESP32 must share common ground with all connected systems for reliable operation:
+- **LED Power Supply**: Connect ESP32 GND to 12V power supply ground
+- **Controller**: Connect ESP32 GND to controller ground for nRF24L01+ communication
+- **Symptoms of Missing Ground**: Unreliable radio communication, LED flickering, random resets
+- **Solution**: Always verify ground connections before power-on
+
+### Power Requirements
+- **ESP32 Power**: 5V via USB or 3.3V regulated supply
+- **LED Power**: 12V DC with adequate current capacity (3-6A)
+- **Radio Power**: 3.3V from ESP32 (nRF24L01+)
+- **Ground Reference**: All systems must share common ground reference
+
+### Common Hardware Issues
+1. **Radio Communication Failures**
+   - Check nRF24L01+ power and ground connections
+   - Verify SPI wiring (MOSI, MISO, SCK, CSN, CE)
+   - Ensure shared ground with controller
+   - Check for electromagnetic interference
+
+2. **LED Display Problems**
+   - Verify 12V power supply connections
+   - Check data line polarity and signal integrity
+   - Ensure proper ground connection to LED power supply
+   - Confirm power injection at both ends of long strips
+
+3. **System Instability**
+   - Verify all ground connections are common
+   - Check power supply stability and noise
+   - Ensure proper decoupling capacitors
+   - Monitor for brownout conditions
