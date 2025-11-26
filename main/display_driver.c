@@ -412,6 +412,9 @@ void display_update(PlayClockDisplay *display) {
   
   // Wait for transmission to complete
   rmt_tx_wait_all_done(display->rmt_channel, portMAX_DELAY);
+  
+  // WS2815 requires explicit reset delay after transmission
+  esp_rom_delay_us(320);
 
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
   if (current_time - display->last_update_time > 1000) {
