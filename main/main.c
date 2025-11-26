@@ -25,7 +25,7 @@ static uint32_t button_hold_start_time_ms = 0;
 static bool long_hold_triggered = false;
 
 // Button debouncing and press detection
-static void check_button_press(void) {
+static bool is_button_pressed(void) {
   uint32_t current_time_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
   bool current_state = gpio_get_level(TEST_BUTTON_PIN) == 0; // Boot button is active low
   
@@ -35,9 +35,12 @@ static void check_button_press(void) {
     button_hold_start_time_ms = current_time_ms;
     long_hold_triggered = false;
     last_button_press_time_ms = current_time_ms;
+    return true;
   } else if (!current_state) {
     button_pressed_state = false;
   }
+  
+  return false;
 }
 
 // Check for long hold (2+ seconds) - only triggers once per press
@@ -159,8 +162,8 @@ static void setup(void) {
 static void loop(void) {
   uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
-  // Check button state changes
-  check_button_press();
+  // Update button state (this is needed to track press/release timing)
+  is_button_pressed();
   
   // Check for button long hold
   if (is_button_long_held()) {
