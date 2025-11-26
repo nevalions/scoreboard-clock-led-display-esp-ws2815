@@ -4,13 +4,12 @@ ESP32-based wireless play clock display for scoreboard systems. Shows seconds (S
 
 ## Overview
 
-The Play Clock module is a pure display unit that:
+Pure display unit that:
 - Displays seconds (00-99) on large LED digits using WS2815 LED strips
 - Receives timing data wirelessly via nRF24L01+ radio communication
 - Shows only controller data without local timing logic
 - Operates as a simple display peripheral with status monitoring
 - Includes built-in test functionality via boot button
-- Features refactored codebase with improved maintainability
 
 ## Hardware
 
@@ -35,7 +34,7 @@ The Play Clock module is a pure display unit that:
 - **Horizontal Segments**: 25cm (~15 LEDs)
 - **LED Type**: WS2815 12V (dual data lines for reliability)
 - **LED Density**: 60 LEDs/m
-- **Total LEDs**: ~900 (estimated for complete display)
+- **Total LEDs**: ~330 (165 per digit)
 
 ## Operation
 
@@ -90,31 +89,6 @@ idf.py build
 - **Radio Library**: radio_common (shared nRF24L01+ driver)
 - **LED Driver**: ESP-IDF LED Strip driver for WS2815
 - **Architecture**: Struct-based design with pure display logic
-- **Code Quality**: Refactored with named constants, helper functions, and improved maintainability
-
-## Code Architecture
-
-### Recent Improvements
-The codebase has been refactored for improved maintainability:
-- **Named Constants**: All magic numbers extracted to descriptive constants
-- **Helper Functions**: Repeated operations consolidated into reusable functions
-- **Variable Naming**: Consistent and descriptive naming conventions
-- **Code Duplication**: Eliminated repetitive patterns in test functions
-- **Type Safety**: Added const correctness where appropriate
-- **Code Organization**: Structured with clear separation of concerns
-- **Documentation**: Comprehensive inline documentation and comments
-
-### Key Constants
-- **WS2815 Timing**: `WS2815_BIT_ONE_HIGH_US`, `WS2815_RESET_PULSE_US`
-- **Test Patterns**: `TEST_COLOR_DELAY_MS`, `TEST_SEGMENT_DELAY_MS`
-- **LED Offsets**: `SEGMENT_A_OFFSET`, `LEDS_PER_DIGIT`
-- **Brightness Levels**: `TEST_COLOR_BRIGHTNESS`, `TEST_WHITE_BRIGHTNESS`
-
-### Helper Functions
-- `fill_all_leds()` - Efficient LED buffer filling
-- `send_ws2815_bit()` - Encapsulated timing-critical bit sending
-- `test_single_led_color()` - Reusable color testing
-- `test_all_leds_color()` - Simplified color pattern testing
 
 ## Troubleshooting
 

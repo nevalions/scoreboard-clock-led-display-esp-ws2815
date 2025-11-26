@@ -35,15 +35,6 @@ The following are automatically configured in your `.zshrc`:
 # Build project
 idf.py build
 
-# Flash to device (DO NOT USE - build only)
-# idf.py flash
-
-# Monitor serial output (DO NOT USE - build only)
-# idf.py monitor
-
-# Build and flash in one command (DO NOT USE - build only)
-# idf.py build flash monitor
-
 # Clean build
 idf.py fullclean
 
@@ -52,17 +43,6 @@ idf.py menuconfig
 ```
 
 **IMPORTANT**: This project should only be built, never flashed to hardware. Use `idf.py build` only.
-
-### Testing
-```bash
-# Build all tests
-idf.py build
-
-# Run specific test (edit test file app_main() to select test)
-# Edit test/test_*.c files to run individual tests
-# Flash test firmware:
-# idf.py flash monitor
-```
 
 ### Git Workflow (Recursive Commits)
 
@@ -130,8 +110,6 @@ typedef struct {
 - **Payload Size**: 32 bytes (controller sends 3 bytes)
 - **Auto-ACK**: Enabled for reliable transmission
 
-
-
 ## Code Style Guidelines
 
 ### Formatting
@@ -165,7 +143,7 @@ typedef struct {
 - GPIO control: `gpio_set_direction(pin, GPIO_MODE_OUTPUT)`, `gpio_set_level(pin, level)`
 - Memory: Prefer stack allocation, use `malloc()` only when necessary
 
-### C Programming Patterns (Current Implementation)
+### C Programming Patterns
 - **Struct-based design** instead of classes (fully implemented)
 - **Pass struct pointer** as first parameter to functions
 - **Use `typedef struct`** for type definitions
@@ -180,9 +158,9 @@ typedef struct {
 - **Display modes** - Stop, Run, Reset, Error modes with visual patterns
 - **Hardware testing** - built-in test patterns and number cycling
 
-### Code Quality and Refactoring Guidelines
+## Code Quality Guidelines
 
-#### Constants and Magic Numbers
+### Constants and Magic Numbers
 - **Extract all magic numbers** to named constants with descriptive names
 - **Use descriptive prefixes** for constant groups (e.g., `WS2815_`, `TEST_`, `SEGMENT_`)
 - **Group related constants** together in logical sections
@@ -193,10 +171,10 @@ typedef struct {
 #define WS2815_BIT_ONE_HIGH_US 1
 #define TEST_COLOR_DELAY_MS 1000
 #define SEGMENT_A_OFFSET 0
-#define LEDS_PER_DIGIT 450
+#define LEDS_PER_DIGIT 165
 ```
 
-#### Helper Functions
+### Helper Functions
 - **Extract repeated operations** into reusable helper functions
 - **Use descriptive function names** that clearly indicate purpose
 - **Keep functions focused** on single responsibilities
@@ -205,11 +183,10 @@ typedef struct {
 ```c
 // Good examples
 static void fill_all_leds(color_t color, uint8_t brightness);
-static void send_ws2815_bit(bool bit_value);
 static void test_single_led_color(PlayClockDisplay *display, color_t color, const char* color_name);
 ```
 
-#### Variable Naming
+### Variable Naming
 - **Use descriptive names** that clearly indicate purpose and type
 - **Add suffixes for clarity** (e.g., `_ms` for milliseconds, `_state` for booleans)
 - **Be consistent** with naming patterns across the codebase
@@ -222,64 +199,21 @@ uint32_t last_button_press_time_ms;   // Not just "last_time"
 bool button_pressed_state;             // Not just "pressed"
 ```
 
-#### Code Duplication
+### Code Duplication
 - **Eliminate repetitive patterns** through helper functions
 - **Consolidate similar operations** into parameterized functions
 - **Use loops and iteration** instead of repeated code blocks
 - **Create test helpers** for common testing patterns
 
-#### Type Safety
+### Type Safety
 - **Add const correctness** to read-only function parameters
 - **Use appropriate types** for values (e.g., `uint32_t` for timestamps)
 - **Prefer explicit types** over implicit conversions
 - **Use enum types** for related constants
 
-### Recent Refactoring Examples
+## Implementation Details
 
-#### Constants Extraction
-```c
-// Before: Magic numbers scattered throughout code
-esp_rom_delay_us(1);  // What does this mean?
-vTaskDelay(pdMS_TO_TICKS(200));  // Why 200ms?
-
-// After: Named constants with clear meaning
-esp_rom_delay_us(WS2815_BIT_ONE_HIGH_US);
-vTaskDelay(pdMS_TO_TICKS(NUMBER_CYCLE_DELAY_MS));
-```
-
-#### Helper Function Creation
-```c
-// Before: Repeated LED filling code
-for (int i = 0; i < LED_COUNT; i++) {
-  led_buffer[i] = rgb_to_ws2815((color_t){255, 0, 0}, 100);
-}
-
-// After: Reusable helper function
-fill_all_leds((color_t){255, 0, 0}, TEST_COLOR_BRIGHTNESS);
-```
-
-#### Variable Naming Improvement
-```c
-// Before: Generic names
-static PlayClockDisplay display;
-static RadioComm radio;
-static uint32_t last_button_press_time;
-
-// After: Descriptive names
-static PlayClockDisplay play_clock_display;
-static RadioComm nrf24_radio;
-static uint32_t last_button_press_time_ms;
-```
-
-#### Code Organization Improvements
-- **Modular Structure**: Clear separation between display, radio, and main logic
-- **Consistent Patterns**: Uniform error handling and initialization patterns
-- **Documentation**: Comprehensive inline documentation for all functions
-- **Type Safety**: Enhanced with const correctness and appropriate type usage
-
-### Key Implementation Details
-
-#### Main Application Structure
+### Main Application Structure
 ```c
 void app_main(void) {
   setup();  // Initialize hardware and radio
@@ -289,48 +223,48 @@ void app_main(void) {
 }
 ```
 
-#### Display Driver Features
+### Display Driver Features
 - **7-segment mapping**: Each digit uses 7 segments with specific LED ranges
-- **LED strip buffer**: 32-bit color buffer for WS2815 communication
+- **LED strip buffer**: RGB buffer for WS2815 communication
 - **Brightness control**: Adjustable brightness (0-255)
 - **Test patterns**: Hardware verification and number cycling tests
 - **Error handling**: Visual error patterns for hardware failures
 
-#### Radio Communication
+### Radio Communication
 - **radio_common integration**: Uses shared nRF24L01+ driver library
 - **FIFO monitoring**: Checks RX FIFO for incoming data
 - **Register debugging**: Radio register dump for troubleshooting
 - **Auto-ACK**: Enabled for reliable data transmission
 
-#### Button Testing
+### Button Testing
 - **Boot button (GPIO0)**: Active-low input with pullup
 - **Debouncing**: 50ms debounce time for reliable detection
 - **Number cycling**: Displays 00-99 sequence for testing
 - **Hardware verification**: LED test pattern on startup
 
-### Memory Safety and C Programming Best Practices
+## Memory Safety and Best Practices
 
-#### Memory Management
+### Memory Management
 - **Stack allocation preferred** over dynamic allocation for predictable timing
 - **Fixed-size buffers** for LED operations to prevent overflow
 - **Bounds checking** in all array access operations
 - **Static allocation** for large data structures (LED buffer, display state)
 
-#### Common C Issues to Avoid
+### Common C Issues to Avoid
 - **Integer overflow** in timestamp calculations (use appropriate types)
 - **Buffer overflow** in LED operations (validate array indices)
 - **Race conditions** in interrupt handling (disable interrupts during critical sections)
 - **Stack overflow** in FreeRTOS tasks (monitor stack usage)
 - **Magic numbers** without clear meaning (use named constants)
 
-#### Defensive Programming
+### Defensive Programming
 - **Null pointer checks** in all public functions
 - **Parameter validation** before dereferencing pointers
 - **Error handling** with graceful degradation
 - **Logging** for debugging and troubleshooting
 - **State validation** before hardware operations
 
-#### Performance Considerations
+### Performance Considerations
 - **Timing-critical sections** for WS2815 communication
 - **Interrupt management** during LED data transmission
 - **Efficient algorithms** for LED buffer operations

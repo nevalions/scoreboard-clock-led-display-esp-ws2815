@@ -53,13 +53,12 @@ static uint8_t led_buffer[LED_COUNT * 3]; // RGB buffer for RMT
 #define SEGMENT_G_OFFSET 150
 // Physical LED base positions for each digit (actual wiring)
 #define DIGIT_0_BASE 0    // Digit 0 starts at LED 0
-#define DIGIT_1_BASE 450  // Digit 1 starts at LED 450
+#define DIGIT_1_BASE 165  // Digit 1 starts at LED 165
 
 // Initialize segment-to-LED mapping for 2-digit display
 static void init_segment_mapping(PlayClockDisplay *display) {
   // Digit 0 (left digit) - uses LEDs 0-164
-  // Digit 1 (right digit) - uses LEDs 450-614
-  // LEDs 165-449 and 615-899 are unused gaps in wiring
+  // Digit 1 (right digit) - uses LEDs 165-329
   
   // Define actual base positions for each digit
   uint16_t digit_base[PLAY_CLOCK_DIGITS] = {DIGIT_0_BASE, DIGIT_1_BASE};
@@ -353,6 +352,38 @@ static void test_single_segment(PlayClockDisplay *display, uint8_t digit, segmen
   vTaskDelay(pdMS_TO_TICKS(TEST_SEGMENT_OFF_DELAY_MS));
 }
 
+// Test function to verify digit addressing - helps find correct base addresses
+static void test_digit_addressing(PlayClockDisplay *display) {
+  ESP_LOGI(TAG, "=== DIGIT ADDRESSING TEST ===");
+  
+  // Test each digit individually with all segments lit (digit 8)
+  for (int digit = 0; digit < PLAY_CLOCK_DIGITS; digit++) {
+    ESP_LOGI(TAG, "Testing digit %d - should show '8'", digit);
+    display_clear(display);
+    
+    // Light all segments for this digit (pattern for 8)
+    uint8_t pattern = digit_patterns[8]; // 0x7F = all segments
+    for (int seg = 0; seg < SEGMENTS_PER_DIGIT; seg++) {
+      if (pattern & (1 << seg)) {
+        set_segment_leds(display, digit, seg, (color_t){255, 0, 0}); // Red
+      }
+    }
+    
+    display_update(display);
+    ESP_LOGI(TAG, "Digit %d base address: %d, LED range: %d-%d", 
+             digit, 
+             (digit == 0) ? DIGIT_0_BASE : DIGIT_1_BASE,
+             (digit == 0) ? DIGIT_0_BASE : DIGIT_1_BASE,
+             (digit == 0) ? DIGIT_0_BASE + 164 : DIGIT_1_BASE + 164);
+    
+    vTaskDelay(pdMS_TO_TICKS(3000)); // Show for 3 seconds
+  }
+  
+  display_clear(display);
+  display_update(display);
+  ESP_LOGI(TAG, "Digit addressing test completed");
+}
+
 // Visual test pattern - displays all colors and segments
 void display_test_pattern(PlayClockDisplay *display) {
   if (!display->initialized) {
@@ -372,6 +403,9 @@ void display_test_pattern(PlayClockDisplay *display) {
   test_all_leds_color(display, (color_t){0, 255, 0}, TEST_COLOR_BRIGHTNESS, "green");
   test_all_leds_color(display, (color_t){0, 0, 255}, TEST_COLOR_BRIGHTNESS, "blue");
   test_all_leds_color(display, (color_t){255, 255, 255}, TEST_WHITE_BRIGHTNESS, "white");
+  
+  // Test digit addressing to verify second digit wiring
+  test_digit_addressing(display);
   
   // Test digit segments
   ESP_LOGI(TAG, "Test pattern: Digit segments");
