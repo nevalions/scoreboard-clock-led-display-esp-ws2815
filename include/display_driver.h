@@ -12,6 +12,7 @@ struct rmt_encoder_t;
 typedef struct rmt_encoder_t *rmt_encoder_handle_t;
 
 // WS2815 LED strip configuration for Play Clock
+#define LED_COUNT 900 // Approximate total LEDs for 2 digits
 #define LED_STRIP_PIN GPIO_NUM_13 // Data pin for WS2815 LED strip
 
 // 7-segment display configuration for Play Clock (2 digits)
@@ -47,15 +48,6 @@ typedef struct {
   uint8_t r, g, b;
 } color_t;
 
-// Brightness configuration structure
-typedef struct {
-  uint8_t default_brightness;     // Default operational brightness (0-255)
-  uint8_t test_color_brightness;  // Brightness for color tests (0-255)
-  uint8_t test_white_brightness;  // Brightness for white tests (0-255)
-  uint8_t min_brightness;         // Minimum allowed brightness (0-255)
-  uint8_t max_brightness;         // Maximum allowed brightness (0-255)
-} brightness_config_t;
-
 // Segment LED ranges for 2-digit play clock
 typedef struct {
   uint16_t start;
@@ -77,9 +69,6 @@ typedef struct {
   
   // Brightness control (0-255)
   uint8_t brightness;
-  
-  // Brightness configuration
-  brightness_config_t brightness_config;
 
   // Segment LED ranges for 2-digit play clock
   segment_range_t segments[PLAY_CLOCK_DIGITS][SEGMENTS_PER_DIGIT];
@@ -105,8 +94,6 @@ void display_show_error(PlayClockDisplay *display);
 void display_update(PlayClockDisplay *display);
 void display_clear(PlayClockDisplay *display);
 void display_set_brightness(PlayClockDisplay *display, uint8_t brightness);
-void display_set_brightness_config(PlayClockDisplay *display, brightness_config_t *config);
-brightness_config_t display_get_brightness_config(PlayClockDisplay *display);
 void display_set_segment(PlayClockDisplay *display, uint8_t digit, segment_t segment, bool enable);
 void display_test_pattern(PlayClockDisplay *display);
 bool display_connection_test(PlayClockDisplay *display);

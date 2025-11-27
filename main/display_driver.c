@@ -21,7 +21,9 @@ static const char *TAG = "DISPLAY_DRIVER";
 #define TEST_LED_OFF_DELAY_MS 200
 #define NUMBER_CYCLE_DELAY_MS 200
 
-
+// Brightness levels for test patterns
+#define TEST_COLOR_BRIGHTNESS 100
+#define TEST_WHITE_BRIGHTNESS 50
 
 // 7-segment digit patterns (0-9)
 // Each bit represents a segment: A,B,C,D,E,F,G
@@ -98,8 +100,8 @@ static void set_led_color(uint16_t led_index, color_t color, uint8_t brightness)
     uint8_t b = (color.b * brightness) / 255;
     
     // RMT encoder expects GRB format for WS2815
-    led_buffer[led_index * 3 + 0] = r; // Red
-    led_buffer[led_index * 3 + 1] = g; // Green  
+    led_buffer[led_index * 3 + 0] = g; // Green
+    led_buffer[led_index * 3 + 1] = r; // Red  
     led_buffer[led_index * 3 + 2] = b; // Blue
   }
 }
@@ -184,17 +186,8 @@ bool display_begin(PlayClockDisplay *display) {
   display->color_warning = (color_t){255, 255, 0}; // Yellow
   display->color_error = (color_t){255, 0, 0};
   
-  // Initialize brightness configuration
-  display->brightness_config = (brightness_config_t){
-    .default_brightness = 255,
-    .test_color_brightness = 100,
-    .test_white_brightness = 50,
-    .min_brightness = 1,
-    .max_brightness = 255
-  };
-  
   // Set default brightness
-  display->brightness = display->brightness_config.default_brightness;
+  display->brightness = 255;
   ESP_LOGI(TAG, "Brightness set to default: %d", display->brightness);
 
   // Clear display
@@ -330,42 +323,8 @@ void display_set_brightness(PlayClockDisplay *display, uint8_t brightness) {
   if (!display->initialized)
     return;
     
-  // Clamp brightness to configured limits
-  if (brightness < display->brightness_config.min_brightness) {
-    brightness = display->brightness_config.min_brightness;
-  } else if (brightness > display->brightness_config.max_brightness) {
-    brightness = display->brightness_config.max_brightness;
-  }
-    
   display->brightness = brightness;
   ESP_LOGI(TAG, "Brightness set to: %d", brightness);
-}
-
-void display_set_brightness_config(PlayClockDisplay *display, brightness_config_t *config) {
-  if (!display->initialized || !config)
-    return;
-    
-  display->brightness_config = *config;
-  
-  // Ensure current brightness is within new limits
-  if (display->brightness < config->min_brightness) {
-    display->brightness = config->min_brightness;
-  } else if (display->brightness > config->max_brightness) {
-    display->brightness = config->max_brightness;
-  }
-  
-  ESP_LOGI(TAG, "Brightness configuration updated - default: %d, test_color: %d, test_white: %d, min: %d, max: %d",
-           config->default_brightness, config->test_color_brightness, config->test_white_brightness,
-           config->min_brightness, config->max_brightness);
-}
-
-brightness_config_t display_get_brightness_config(PlayClockDisplay *display) {
-  if (!display) {
-    // Return default config if display is null
-    return (brightness_config_t){255, 100, 50, 1, 255};
-  }
-  
-  return display->brightness_config;
 }
 
 void display_set_segment(PlayClockDisplay *display, uint8_t digit, segment_t segment, bool enable) {
@@ -471,10 +430,10 @@ void display_test_pattern(PlayClockDisplay *display) {
   vTaskDelay(pdMS_TO_TICKS(500));
   
   // Test primary colors using helper function
-  test_all_leds_color(display, (color_t){255, 0, 0}, display->brightness_config.test_color_brightness, "red");
-  test_all_leds_color(display, (color_t){0, 255, 0}, display->brightness_config.test_color_brightness, "green");
-  test_all_leds_color(display, (color_t){0, 0, 255}, display->brightness_config.test_color_brightness, "blue");
-  test_all_leds_color(display, (color_t){255, 255, 255}, display->brightness_config.test_white_brightness, "white");
+  test_all_leds_color(display, (color_t){255, 0, 0}, TEST_COLOR_BRIGHTNESS, "red");
+  test_all_leds_color(display, (color_t){0, 255, 0}, TEST_COLOR_BRIGHTNESS, "green");
+  test_all_leds_color(display, (color_t){0, 0, 255}, TEST_COLOR_BRIGHTNESS, "blue");
+  test_all_leds_color(display, (color_t){255, 255, 255}, TEST_WHITE_BRIGHTNESS, "white");
   
   // Test digit addressing to verify second digit wiring
   test_digit_addressing(display);
