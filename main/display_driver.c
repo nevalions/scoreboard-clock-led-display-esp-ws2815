@@ -264,7 +264,20 @@ void display_set_time(PlayClockDisplay *display, uint16_t seconds) {
   xSemaphoreGive(display_mutex);
 }
 
+void display_set_color(PlayClockDisplay *display, uint8_t r, uint8_t g, uint8_t b) {
+  if (!display->initialized)
+    return;
 
+  // Thread-safe display operations
+  xSemaphoreTake(display_mutex, portMAX_DELAY);
+  
+  // Update the main color with received RGB values
+  display->color_on = (color_t){r, g, b};
+  
+  ESP_LOGI(TAG, "Display color updated to RGB(%d,%d,%d)", r, g, b);
+  
+  xSemaphoreGive(display_mutex);
+}
 
 void display_set_run_mode(PlayClockDisplay *display) {
   if (!display->initialized)

@@ -203,10 +203,11 @@ static void loop(void) {
   if (radio_receive_message(&nrf24_radio, &system_state)) {
     // Set display mode based on system state
     display_set_run_mode(&play_clock_display);
+    display_set_color(&play_clock_display, system_state.r, system_state.g, system_state.b);
     display_set_time(&play_clock_display, system_state.seconds);
     
-    ESP_LOGI(TAG, "Time update: seconds=%d, seq=%d",
-             system_state.seconds, system_state.sequence);
+    ESP_LOGI(TAG, "Time update: seconds=%d, RGB(%d,%d,%d), seq=%d",
+             system_state.seconds, system_state.r, system_state.g, system_state.b, system_state.sequence);
     // Update current_time after receiving message
     current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
   }

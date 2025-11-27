@@ -50,14 +50,17 @@ bool radio_receive_message(RadioComm *radio, SystemState *state) {
     // Clear RX_DR flag
     nrf24_write_register(radio, NRF24_REG_STATUS, NRF24_STATUS_RX_DR);
     
-    // Parse payload (format: seconds(2), sequence(1))
+    // Parse payload (format: seconds(2), r(1), g(1), b(1), sequence(1))
     state->seconds = (payload[0] << 8) | payload[1];
-    state->sequence = payload[2];
+    state->r = payload[2];
+    state->g = payload[3];
+    state->b = payload[4];
+    state->sequence = payload[5];
     state->last_status_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
     state->link_alive = true;
     
-    ESP_LOGI(TAG, "Message received: seconds=%d, seq=%d",
-             state->seconds, state->sequence);
+    ESP_LOGI(TAG, "Message received: seconds=%d, RGB(%d,%d,%d), seq=%d",
+             state->seconds, state->r, state->g, state->b, state->sequence);
     return true;
   }
 

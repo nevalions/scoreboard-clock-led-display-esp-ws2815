@@ -9,6 +9,7 @@
 // System state structure
 typedef struct {
   uint16_t seconds;
+  uint8_t r, g, b;  // RGB color values
   uint8_t sequence;
   uint32_t last_status_time;
   bool link_alive;
