@@ -1,130 +1,135 @@
-# Play Clock Module
+# ESP32 Play Clock
 
-ESP32-based wireless play clock display for scoreboard systems. Shows seconds (SS) on large 7-segment LED displays and receives timing data wirelessly from a central controller via nRF24L01+ radio.
+A wireless play clock display for sports scoreboard systems using ESP32 and WS2815 LED strips.
 
-## Quick Start
+## Overview
 
+This project implements a play clock that receives time data wirelessly from a controller and displays it on large LED digit displays. It's designed for sports timing applications where a visible play clock is needed.
+
+## Features
+
+- **Wireless Communication**: Receives data via nRF24L01+ radio module
+- **Large LED Display**: Uses WS2815 LED strips for 7-segment digit display
+- **Real-time Updates**: Displays current play time with second precision
+- **Link Monitoring**: Shows connection status with visual feedback
+- **Hardware Testing**: Built-in test patterns for verification
+- **Multiple Display Modes**: Stop, Run, Reset, and Error states
+
+## Hardware Requirements
+
+### Components
+- ESP32 development board
+- WS2815 LED strips (12V, approximately 165 LEDs per digit)
+- nRF24L01+ wireless module
+- 12V DC power supply (3-6A capacity)
+- Button for testing (optional, uses GPIO0/BOOT button)
+
+### Wiring
+- LED data line to ESP32 GPIO pin (configurable)
+- nRF24L01+ SPI interface (MOSI, MISO, SCK, CSN, CE)
+- Power: 5V/3.3V to ESP32, 12V to LED strips
+- Common ground connection required
+
+## Software Architecture
+
+### Core Components
+- **Display Driver**: Manages WS2815 LED strips and 7-segment mapping
+- **Radio Communication**: Handles nRF24L01+ data reception
+- **System State**: Tracks time, sequence, and link status
+- **Button Handler**: Debounces input for testing modes
+
+### Data Protocol
+Receives 3-byte packets:
+- Byte 0-1: Time value (0-65535 seconds)
+- Byte 2: Sequence number (0-255)
+
+### Display Modes
+- **Stop Mode**: Shows current time, static display
+- **Run Mode**: Shows current time, ready for updates
+- **Reset Mode**: Shows "00" or error pattern
+- **Error Mode**: Shows warning pattern for communication issues
+
+## Installation and Setup
+
+### Prerequisites
+- ESP-IDF development environment (v6.1-dev)
+- Compatible toolchain for ESP32
+
+### Build Instructions
 ```bash
 # Activate ESP-IDF environment
 idf
 
-# Build project
+# Build the project
 idf.py build
+
+# Clean build if needed
+idf.py fullclean
+
+# Configure project
+idf.py menuconfig
 ```
 
 **Important**: This project should only be built, never flashed to hardware.
 
-## Overview
+### Configuration
+- LED strip pin in `sdkconfig`
+- Radio settings in source code
+- Display brightness and colors configurable
 
-The Play Clock is a pure display unit that:
-- Displays seconds (00-99) on large LED digits using WS2815 LED strips
-- Receives timing data wirelessly via nRF24L01+ radio communication
-- Shows only controller data without local timing logic
-- Operates as a simple display peripheral with status monitoring
-- Includes built-in test functionality via boot button
+## Usage
 
-## Hardware
+### Normal Operation
+1. Power on the device
+2. LED test pattern runs on startup
+3. Device listens for radio data
+4. Display shows received time data
+5. Status LED indicates link quality
 
-### Components
-- **MCU**: ESP32
-- **Radio**: nRF24L01+ (2.4 GHz)
-- **LED Display**: WS2815 12V LED strips forming 2 × 100cm digits
-- **Power**: 12V DC with power injection at both ends
+### Testing Mode
+- Press and hold the BOOT button (GPIO0) during startup
+- Release to enter number cycling test (00-99)
+- Useful for verifying LED segment mapping
 
-### Pin Configuration
-| Function | Pin | Description |
-|----------|-----|-------------|
-| Radio CE | GPIO5 | Radio chip enable |
-| Radio CSN | GPIO4 | Radio chip select |
-| Status LED | GPIO2 | System status indicator |
-| LED Strip Data | GPIO13 | WS2815 LED strip data line |
-| Test Button | GPIO0 | Boot button (active low) |
-
-### Display Specifications
-- **Digits**: 2 (seconds display - SS format)
-- **Segment Height**: ~50cm (~30 LEDs per vertical segment)
-- **Horizontal Segments**: 25cm (~15 LEDs)
-- **LED Type**: WS2815 12V (dual data lines for reliability)
-- **LED Density**: 60 LEDs/m
-- **Total LEDs**: ~330 (165 per digit)
-
-## Operation
-
-### Display Features
-- **Time Display**: Shows seconds (00-99) as received from controller
-- **Connection Monitoring**: Status LED indicates controller link status
-- **Smart Blinking**: Different blink rates for connected/disconnected states
-- **Error Display**: Shows error pattern on hardware failure
-- **Timeout Detection**: 10-second timeout with visual warning
-- **Built-in Testing**: Number cycling test via boot button (GPIO0)
-- **LED Test Pattern**: Hardware verification pattern on startup
-- **Display Modes**: Stop, Run, Reset, and Error modes with visual indicators
-
-### Communication Protocol
-- **Radio Module**: nRF24L01+ (2.4 GHz) wireless communication
-- **Data Format**: 3-byte payload [seconds_high, seconds_low, sequence]
-- **Channel**: 76 (2.476 GHz)
-- **Data Rate**: 1 Mbps
-- **Payload Size**: 32 bytes (controller sends 3 bytes)
-- **Auto-ACK**: Enabled for reliable transmission
-- **Pure Display**: Shows received seconds without local processing
-- **Radio Library**: Uses radio_common library for nRF24L01+ operations
-
-### Status LED Behavior
-- **Connected**: Slow blink (2 second period - 1s on, 1s off)
-- **Disconnected**: Fast blink (200ms period - 100ms on, 100ms off)
-- **Link Timeout**: 10 seconds without received data triggers disconnection
-- **Link Recovery**: Automatic when data reception resumes
-- **Hardware Error**: Fast blink (250ms period) if radio initialization fails
-- **Display Error**: Shows error pattern on LED strips if display fails
-
-## Technology Stack
-- **Language**: Native C (not C++)
-- **Framework**: ESP-IDF v6.1-dev
-- **Target**: ESP32 microcontroller
-- **Build System**: CMake with ESP-IDF
-- **Radio Library**: radio_common (shared nRF24L01+ driver)
-- **LED Driver**: ESP-IDF LED Strip driver for WS2815
-- **Architecture**: Struct-based design with pure display logic
-
-## Troubleshooting
-
-### Display Issues
-- Check 12V power supply and connections
-- Verify LED strip wiring and data polarity
-- Confirm power injection at both ends of each digit
-- **Shared Ground**: ESP32 must share common ground with LED power supply and controller
-
-### Radio Communication
-- Verify nRF24L01+ connections (CE, CSN, SPI)
-- Check radio module power supply
-- Confirm controller is transmitting data
-- Check status LED behavior for connection issues
-- Monitor serial logs for timeout/recovery messages
-- **Shared Ground**: ESP32 must share common ground with controller for reliable communication
-
-### System Errors
-- Check serial monitor for error messages
-- Verify ESP32 power and boot sequence
-- Check for hardware conflicts (pin assignments)
-- **Radio Debug**: Radio register dump available in serial logs
-- **Button Test**: Press boot button (GPIO0) to run number cycling test
-- **LED Test**: Automatic test pattern runs on startup for verification
-- **Ground Connection**: Ensure ESP32 shares ground with all connected systems
-
-## Technical Specifications
-
-### Power Consumption
-- **ESP32**: ~160-200mA (base operation)
-- **LED Strip**: 3-6A at 12V (when implemented)
-- **Radio**: ~15mA (receive mode)
-
-### Timing Constraints
-- **Radio Reception**: Continuous listening for controller data
-- **Display Updates**: Immediate when new data received
-- **Link Timeout**: 10-second timeout detection
-- **Status LED**: 2s blink (connected), 200ms blink (disconnected)
+### Troubleshooting
+- Check radio link status LED
+- Verify power and ground connections
+- Monitor serial output for debug information
+- Use built-in test patterns to verify hardware
 
 ## Development
 
-For detailed development setup, build commands, code style guidelines, and workflow, see [AGENTS.md](AGENTS.md).
+### Project Structure
+```
+├── main/
+│   ├── main.c              # Main application logic
+│   ├── display_driver.c    # LED strip management
+│   ├── led_strip_encoder.c # WS2815 protocol handling
+│   └── radio_comm.c        # Radio communication
+├── include/
+│   ├── display_driver.h    # Display driver interface
+│   ├── led_strip_encoder.h # LED strip encoder interface
+│   └── radio_comm.h        # Radio communication interface
+└── CMakeLists.txt          # Build configuration
+```
+
+### Key Features
+- **Pure C Implementation**: Native ESP-IDF C code (converted from C++)
+- **Real-time Operation**: Efficient main loop design
+- **Hardware Abstraction**: Clean separation of concerns
+- **Error Handling**: Robust error detection and recovery
+- **Thread Safety**: Mutex protection for shared resources
+- **radio_common Integration**: Uses shared nRF24L01+ driver library
+
+## Technical Specifications
+
+- **Microcontroller**: ESP32 (240 MHz, dual-core)
+- **Display**: WS2815 LED strips, 12V powered
+- **Wireless**: nRF24L01+ (2.4 GHz, 1 Mbps)
+- **Update Rate**: Up to 50 Hz display updates
+- **Power Consumption**: ~500mA (12V) + ESP32 power
+- **Operating Temperature**: -20°C to +70°C
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

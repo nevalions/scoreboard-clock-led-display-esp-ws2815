@@ -64,6 +64,8 @@ git push
 
 **Important**: Always commit submodule changes first, then update the parent repository. The parent repo only tracks which commit the submodule points to.
 
+**Note**: Do not add AGENTS.md to README.md - this file is for development reference only.
+
 For project overview and hardware specifications, see [README.md](README.md).
 
 ## Communication Protocol
