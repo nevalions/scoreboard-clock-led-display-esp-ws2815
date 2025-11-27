@@ -99,9 +99,9 @@ static void set_led_color(uint16_t led_index, color_t color, uint8_t brightness)
     uint8_t g = (color.g * brightness) / 255;
     uint8_t b = (color.b * brightness) / 255;
     
-    // RMT encoder expects RGB format
-    led_buffer[led_index * 3 + 0] = g; // Green
-    led_buffer[led_index * 3 + 1] = r; // Red  
+    // RMT encoder expects GRB format for WS2815
+    led_buffer[led_index * 3 + 0] = r; // Red
+    led_buffer[led_index * 3 + 1] = g; // Green  
     led_buffer[led_index * 3 + 2] = b; // Blue
   }
 }
